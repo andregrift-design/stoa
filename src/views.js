@@ -2,7 +2,7 @@ import { html, useEffect, useReducer, useState } from './ui.js';
 import { store } from './db.js';
 import { eventsByDay, onEvents } from './calendar.js';
 import { InkPad } from './ink.js';
-import { quoteFor, MONTH_THEMES, exerciseFor, VIRTUES, DEFAULT_HABITS } from './stoic.js';
+import { quoteFor, MONTH_THEMES, exerciseFor, VIRTUES, DEFAULT_HABITS, DEFAULT_BODY, BODY_LEVELS } from './stoic.js';
 import {
   MONTHS, DAYS, ymd, ym, addDays, startOfWeek, monthWeeks, sameDay, today, weekLabel, weekNumber,
   daysInMonth, fmtTime, parseYmd,
@@ -35,11 +35,11 @@ export function useEvents(from, to) {
 }
 
 export function useSettings() {
-  return useDoc('settings', { calendars: [], habits: DEFAULT_HABITS, lifespan: 80 });
+  return useDoc('settings', { calendars: [], habits: DEFAULT_HABITS, body: DEFAULT_BODY, lifespan: 80 });
 }
 
 const dayDoc = (d) => store.get(`day:${ymd(d)}`) || {};
-const DAY = { intentions: [], premed: [], control: { in: [], out: [] }, habits: {}, gratitude: [], virtues: {}, review: {} };
+const DAY = { body: {}, bodyExtra: [], intentions: [], premed: [], control: { in: [], out: [] }, habits: {}, gratitude: [], virtues: {}, review: {} };
 
 function hasContent(doc) {
   return Object.values(doc).some((v) => (typeof v === 'string' ? v.trim()
@@ -85,6 +85,43 @@ function VirtueToggle({ v, value, onCycle }) {
       <span class="virtue-text"><b>${v.name}</b><small>${v.q}</small></span>
       <span class="virtue-state">${VIRTUE_STATES[state] || 'tap'}</span>
     </button>`;
+}
+
+function BodyLevel({ label, value, onChange }) {
+  return html`
+    <div class="body-row">
+      <span class="body-name">${label}</span>
+      <div class="body-levels" role="group" aria-label=${label}>
+        ${[1, 2, 3].map((n) => html`
+          <button class=${`b${n} ${value === n ? 'on' : ''}`} aria-pressed=${value === n} title=${BODY_LEVELS[n]}
+            aria-label=${`${label}: ${BODY_LEVELS[n]}`} onClick=${() => onChange(value === n ? 0 : n)}>${n}</button>`)}
+      </div>
+    </div>`;
+}
+
+function BodyBlock({ doc, update, items }) {
+  const extra = doc.bodyExtra || [];
+  const rows = [...extra, { text: '', level: 0 }];
+  const setExtra = (i, patch) => update((d) => {
+    const list = [...(d.bodyExtra || [])];
+    list[i] = { ...(list[i] || { text: '', level: 0 }), ...patch };
+    d.bodyExtra = list.filter((x, j) => j === i || x.text.trim() || x.level);
+  });
+  return html`
+    <${Block} title="How my body feels" hint="Tap how much it bothers me: 1 a little, 2 clearly, 3 a lot">
+      ${items.map((it) => html`<${BodyLevel} label=${it.name} value=${doc.body[it.id] || 0}
+        onChange=${(n) => update((d) => { d.body[it.id] = n; })} />`)}
+      ${rows.map((x, i) => html`
+        <div class="body-row">
+          <input class="line body-free" value=${x.text} placeholder=${i === extra.length ? 'Something else…' : ''}
+            aria-label="Something else I notice" onInput=${(e) => setExtra(i, { text: e.target.value })} />
+          <div class="body-levels" role="group" aria-label=${x.text || 'Something else'}>
+            ${[1, 2, 3].map((n) => html`
+              <button class=${`b${n} ${x.level === n ? 'on' : ''}`} aria-pressed=${x.level === n} title=${BODY_LEVELS[n]}
+                onClick=${() => setExtra(i, { level: x.level === n ? 0 : n })}>${n}</button>`)}
+          </div>
+        </div>`)}
+    <//>`;
 }
 
 function EventChip({ ev, compact }) {
@@ -212,6 +249,7 @@ export function DayView({ date, go }) {
               ${!(settings.habits || []).length && html`<p class="hint">Add habits in Settings.</p>`}
             </div>
           <//>
+          <${BodyBlock} doc=${doc} update=${update} items=${settings.body || DEFAULT_BODY} />
           <${Block} title="Mood & energy">
             <${Scale} label="Mood" low="heavy" high="serene" value=${doc.mood} onChange=${(n) => update((d) => { d.mood = n; })} />
             <${Scale} label="Energy" low="drained" high="vital" value=${doc.energy} onChange=${(n) => update((d) => { d.energy = n; })} />

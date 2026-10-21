@@ -2,6 +2,7 @@ import { html, render, useEffect, useState, useReducer } from './ui.js';
 import { store, sync, startSync, stopSync, startSyncLoop, setStatus, pull } from './db.js';
 import { refreshFeeds, feedErrors, onEvents } from './calendar.js';
 import { YearView, MonthView, WeekView, DayView, useSettings } from './views.js';
+import { DEFAULT_BODY } from './stoic.js';
 import { MONTHS, ymd, parseYmd, today, addDays, addMonths, startOfWeek, weekLabel } from './dates.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
@@ -128,6 +129,13 @@ function Settings({ onClose }) {
   const [msg, setMsg] = useState('');
   const [cal, setCal] = useState({ name: '', url: '' });
   const [habit, setHabit] = useState('');
+  const [bodyItem, setBodyItem] = useState('');
+  const bodyList = settings.body || DEFAULT_BODY;
+  const addBody = () => {
+    if (!bodyItem.trim()) return;
+    update((s) => { s.body = [...(s.body || DEFAULT_BODY), { id: Math.random().toString(36).slice(2, 9), name: bodyItem.trim() }]; });
+    setBodyItem('');
+  };
   const addHabit = () => {
     if (!habit.trim()) return;
     update((s) => { s.habits = [...(s.habits || []), { id: Math.random().toString(36).slice(2, 9), name: habit.trim() }]; });
@@ -237,6 +245,22 @@ function Settings({ onClose }) {
             <input class="grow" placeholder="New habit, e.g. Meditate 10 min" value=${habit} onInput=${(e) => setHabit(e.target.value)}
               onKeyDown=${(e) => e.key === 'Enter' && addHabit()} />
             <button onClick=${addHabit}>Add</button>
+          </div>
+        </section>
+
+        <section>
+          <h3>How my body feels</h3>
+          <p class="hint">What you rate each day. Past ratings are kept if you remove an item.</p>
+          ${bodyList.map((b, i) => html`
+            <div class="cal-row">
+              <input class="grow" value=${b.name} aria-label="Body item name"
+                onInput=${(e) => update((s) => { s.body = (s.body || DEFAULT_BODY).map((x, j) => (j === i ? { ...x, name: e.target.value } : x)); })} />
+              <button onClick=${() => update((s) => { s.body = (s.body || DEFAULT_BODY).filter((_, j) => j !== i); })}>Remove</button>
+            </div>`)}
+          <div class="row">
+            <input class="grow" placeholder="New item, e.g. Flank ache" value=${bodyItem} onInput=${(e) => setBodyItem(e.target.value)}
+              onKeyDown=${(e) => e.key === 'Enter' && addBody()} />
+            <button onClick=${addBody}>Add</button>
           </div>
         </section>
 

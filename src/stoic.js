@@ -107,3 +107,13 @@ export const DEFAULT_HABITS = [
   { id: 'cold', name: 'Cold shower' },
   { id: 'nophone', name: 'No phone first hour' },
 ];
+
+export const DEFAULT_BODY = [
+  { id: 'fatigue', name: 'Fatigue' },
+  { id: 'pain', name: 'Pain' },
+  { id: 'sleep', name: 'Poor sleep' },
+  { id: 'appetite', name: 'Low appetite' },
+];
+
+// How much something bothers me today, 0-3.
+export const BODY_LEVELS = ['none', 'a little', 'clearly', 'a lot'];
