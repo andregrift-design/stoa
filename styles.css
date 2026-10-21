@@ -302,6 +302,51 @@ h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: v
 .hg-cell.future { opacity: .45; }
 .hg-count { padding-left: 8px; font-weight: 600; color: var(--accent-strong); }
 
+/* ---------- reviews ---------- */
+
+.review { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--line-soft); }
+.review-h { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 500; margin: 22px 0 8px; }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.tile { background: var(--tint); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.tile small { font-size: 12px; color: var(--muted); }
+.tile b { font-family: var(--serif); font-size: 30px; line-height: 1.05; }
+.delta { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.mood-chart { width: 100%; height: auto; display: block; }
+.mood-chart .grid { stroke: var(--line-soft); stroke-width: 1; }
+.mood-chart .tick { fill: var(--muted); font-size: 11px; }
+.mood-chart .mood { fill: none; stroke: var(--accent-strong); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.mood-chart .energy { fill: none; stroke: var(--terra); stroke-width: 2; stroke-dasharray: 6 4; stroke-linejoin: round; }
+.mood-chart .prev { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 2 4; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--muted); margin-top: 4px; }
+.chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 18px; height: 0; border-top: 2.5px solid; display: inline-block; }
+.sw.mood { border-color: var(--accent-strong); }
+.sw.energy { border-color: var(--terra); border-top-style: dashed; }
+.sw.prev { border-color: var(--muted); border-top-style: dotted; }
+.body-strip { overflow-x: auto; }
+.bs-row { display: flex; align-items: center; gap: 2px; margin: 3px 0; min-width: 480px; }
+.bs-label { width: 120px; flex: none; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
+.bs-row i, .bs-legend i { flex: 1; height: 16px; border-radius: 3px; background: var(--line-soft); }
+.bs-row i.none { background: transparent; border: 1px dashed var(--line-soft); }
+.body-strip .l1 { background: var(--m3); } .body-strip .l2 { background: var(--m2); } .body-strip .l3 { background: var(--m1); }
+.bs-legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.bs-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.bs-legend i { flex: none; width: 14px; height: 14px; }
+.table-wrap { overflow-x: auto; }
+.compare { border-collapse: collapse; width: 100%; font-size: 14px; }
+.compare th, .compare td { padding: 6px 10px; border-bottom: 1px solid var(--line-soft); text-align: right; white-space: nowrap; }
+.compare th:first-child { text-align: left; font-weight: 400; }
+.compare thead th { font-size: 12px; color: var(--muted); font-weight: 500; }
+.compare tr.group th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding-top: 14px; font-weight: 500; }
+.compare td b { font-weight: 600; }
+.compare td.muted { color: var(--muted); }
+.patterns { margin: 0; padding-left: 18px; line-height: 1.55; }
+.patterns li { margin: 4px 0; }
+.patterns.reflect { font-family: var(--serif); font-size: 18px; font-style: italic; }
+.own-words { border-left: 2px solid var(--terra); padding-left: 14px; font-family: var(--serif); font-size: 18px; }
+.own-words p { margin: 4px 0; }
+.q-seg { margin-bottom: 4px; }
+
 /* ---------- year ---------- */
 
 .year-layout { display: grid; grid-template-columns: 290px 1fr; gap: 36px; }
@@ -407,6 +452,9 @@ code { background: var(--tint); padding: 1px 5px; border-radius: 4px; }
   .mg-dow::first-letter { font-size: 11px; }
   .year-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
   .stats b { font-size: 24px; }
+  .tiles { grid-template-columns: 1fr 1fr; }
+  .compare { font-size: 13px; }
+  .compare th, .compare td { padding: 6px 6px; }
   .life-row { grid-template-columns: 14px repeat(52, minmax(0, 1fr)); gap: 1px; }
   .life-grid { gap: 1px; }
   .life-row i { border-radius: 1px; border-width: .5px; }

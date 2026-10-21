@@ -2,6 +2,7 @@ import { html, useEffect, useReducer, useState } from './ui.js';
 import { store } from './db.js';
 import { eventsByDay, onEvents } from './calendar.js';
 import { InkPad } from './ink.js';
+import { hasContent, MonthReview, QuarterReview, quarterOf } from './review.js';
 import { quoteFor, MONTH_THEMES, exerciseFor, VIRTUES, DEFAULT_HABITS, DEFAULT_BODY, BODY_LEVELS } from './stoic.js';
 import {
   MONTHS, DAYS, ymd, ym, addDays, startOfWeek, monthWeeks, sameDay, today, weekLabel, weekNumber,
@@ -40,12 +41,6 @@ export function useSettings() {
 
 const dayDoc = (d) => store.get(`day:${ymd(d)}`) || {};
 const DAY = { body: {}, bodyExtra: [], intentions: [], premed: [], control: { in: [], out: [] }, habits: {}, gratitude: [], virtues: {}, review: {} };
-
-function hasContent(doc) {
-  return Object.values(doc).some((v) => (typeof v === 'string' ? v.trim()
-    : Array.isArray(v) ? v.some((x) => (typeof x === 'string' ? x.trim() : x && Object.values(x).some(Boolean)))
-    : v && typeof v === 'object' ? Object.values(v).some((x) => (Array.isArray(x) ? x.some(Boolean) : !!x)) : !!v));
-}
 
 // ---------- small building blocks ----------
 
@@ -444,6 +439,7 @@ export function MonthView({ date, go }) {
         <${MoodLegend} />
         <h2 class="phase">Habits</h2>
         <${HabitGrid} y=${y} m=${m} habits=${settings.habits || []} go=${go} />
+        <${MonthReview} y=${y} m=${m} settings=${settings} />
       </div>
     </div>`;
 }
@@ -488,14 +484,17 @@ export function YearView({ date, go }) {
   useAnyChange();
   const y = date.getFullYear();
   const [tab, setTab] = useState('year');
+  const [settings] = useSettings();
+  const [q, setQ] = useState(() => (date.getFullYear() === today().getFullYear() ? quarterOf(today()) : 4));
   const [doc, update] = useDoc(`year:${y}`, { values: [], letgo: [] });
   const stats = yearStats(y);
   return html`
     <div class="page year">
       <header class="page-head">
-        <h1 class="display">${tab === 'year' ? y : 'Memento mori'}</h1>
+        <h1 class="display">${tab === 'year' ? y : tab === 'quarters' ? `${y} quarters` : 'Memento mori'}</h1>
         <div class="seg">
           <button class=${tab === 'year' ? 'on' : ''} onClick=${() => setTab('year')}>${y}</button>
+          <button class=${tab === 'quarters' ? 'on' : ''} onClick=${() => setTab('quarters')}>Quarters</button>
           <button class=${tab === 'life' ? 'on' : ''} onClick=${() => setTab('life')}>Life in weeks</button>
         </div>
       </header>
@@ -522,6 +521,9 @@ export function YearView({ date, go }) {
             <${MoodLegend} />
           </div>
         </div>`
+      : tab === 'quarters' ? html`
+        <div class="seg q-seg">${[1, 2, 3, 4].map((n) => html`<button class=${q === n ? 'on' : ''} onClick=${() => setQ(n)}>Q${n}</button>`)}</div>
+        <${QuarterReview} y=${y} q=${q} settings=${settings} />`
       : html`<${LifeInWeeks} />`}
     </div>`;
 }
