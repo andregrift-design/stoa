@@ -1,6 +1,6 @@
-# Stoa
+# Ataraxia
 
-A Stoic day planner and journal for iPhone, iPad and Mac, based on the layout of the Paperlike 2027 planner.
+Ataraxia (Greek: tranquility of mind) is a Stoic day planner and journal for iPhone, iPad and Mac, based on the layout of the Paperlike 2027 planner.
 
 - **Day**: a quote of the day, then three parts.
   - Morning: your intention, premeditatio malorum (what could go wrong, and how you'll respond) and the dichotomy of control.
@@ -50,7 +50,7 @@ Live at **https://andregrift-design.github.io/stoa/** from the `main` branch of
 
 1. Mac Calendar app: right-click a calendar → **Share Calendar…** → tick **Public Calendar** → copy the `webcal://` link.
    (Anyone with that link can view that calendar; it's long and unguessable, but don't share it.)
-2. Stoa → ⚙︎ → Calendar → paste the link, give it a name → **Add**.
+2. Ataraxia → ⚙︎ → Calendar → paste the link, give it a name → **Add**.
 3. Repeat per calendar. Events refresh every 15 minutes and when you open the app.
 
 Calendar feeds are read-only: add or change events in Apple Calendar itself.

@@ -153,7 +153,7 @@ function Settings({ onClose }) {
     setMsg(data.session ? 'Account created and signed in.' : 'Account created. Confirm it with the link in your email, then sign in here.');
   };
   const signOut = async () => {
-    if (!confirm('Sign out? Planner data is removed from this device (it stays in your account).')) return;
+    if (!confirm('Sign out? Your journal is removed from this device (it stays in your account).')) return;
     await sync.client.auth.signOut();
     await store.clear();
   };
@@ -175,7 +175,7 @@ function Settings({ onClose }) {
     const blob = new Blob([JSON.stringify(store.exportAll(), null, 1)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `planner-backup-${ymd(new Date())}.json`;
+    a.download = `ataraxia-backup-${ymd(new Date())}.json`;
     a.click();
   };
   const importData = (e) => {

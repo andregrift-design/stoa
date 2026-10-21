@@ -1,6 +1,6 @@
 {
-  "name": "Stoa",
-  "short_name": "Stoa",
+  "name": "Ataraxia",
+  "short_name": "Ataraxia",
   "description": "A Stoic day planner and journal that syncs across your devices.",
   "start_url": "./",
   "scope": "./",

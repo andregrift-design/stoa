@@ -496,7 +496,7 @@ function LifeInWeeks() {
     return html`<div class="life-empty">
       <p>Your life as a grid of weeks: one row per year, one square per week.</p>
       <label>Your birth date <input type="date" onChange=${(e) => update((s) => { s.birthDate = e.target.value; })} /></label>
-      <p class="hint">Stored only in your own planner.</p>
+      <p class="hint">Stored only in your own journal.</p>
     </div>`;
   }
   const now = today();
