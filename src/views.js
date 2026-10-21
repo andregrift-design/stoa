@@ -3,7 +3,10 @@ import { store } from './db.js';
 import { eventsByDay, onEvents } from './calendar.js';
 import { InkPad } from './ink.js';
 import { hasContent, MonthReview, QuarterReview, quarterOf } from './review.js';
-import { quoteFor, MONTH_THEMES, exerciseFor, VIRTUES, DEFAULT_HABITS, DEFAULT_BODY, BODY_LEVELS } from './stoic.js';
+import {
+  VIRTUES, IMMEASURABLES, DEFAULT_HABITS, DEFAULT_BODY, BODY_LEVELS, MEMENTO_BUDDHIST,
+  quoteForPath, themeFor, exerciseForPath, hasStoic, hasBuddhist,
+} from './stoic.js';
 import {
   MONTHS, DAYS, ymd, ym, addDays, startOfWeek, monthWeeks, sameDay, today, weekLabel, weekNumber,
   daysInMonth, fmtTime, parseYmd,
@@ -36,11 +39,16 @@ export function useEvents(from, to) {
 }
 
 export function useSettings() {
-  return useDoc('settings', { calendars: [], habits: DEFAULT_HABITS, body: DEFAULT_BODY, lifespan: 80 });
+  return useDoc('settings', { calendars: [], habits: DEFAULT_HABITS, body: DEFAULT_BODY, lifespan: 80, path: 'stoic' });
 }
 
+// The virtue set shown in dots and counts: Stoic virtues, or the Buddhist immeasurables.
+export const virtueSet = (path) => (path === 'buddhist'
+  ? { field: 'immeasurables', items: IMMEASURABLES, name: 'immeasurables' }
+  : { field: 'virtues', items: VIRTUES, name: 'virtues' });
+
 const dayDoc = (d) => store.get(`day:${ymd(d)}`) || {};
-const DAY = { body: {}, bodyExtra: [], intentions: [], premed: [], control: { in: [], out: [] }, habits: {}, gratitude: [], virtues: {}, review: {} };
+const DAY = { sit: {}, letbe: [], immeasurables: {}, body: {}, bodyExtra: [], intentions: [], premed: [], control: { in: [], out: [] }, habits: {}, gratitude: [], virtues: {}, review: {} };
 
 // ---------- small building blocks ----------
 
@@ -94,7 +102,7 @@ function BodyLevel({ label, value, onChange }) {
     </div>`;
 }
 
-function BodyBlock({ doc, update, items }) {
+function BodyBlock({ doc, update, items, arrow }) {
   const extra = doc.bodyExtra || [];
   const rows = [...extra, { text: '', level: 0 }];
   const setExtra = (i, patch) => update((d) => {
@@ -116,6 +124,11 @@ function BodyBlock({ doc, update, items }) {
                 onClick=${() => setExtra(i, { level: x.level === n ? 0 : n })}>${n}</button>`)}
           </div>
         </div>`)}
+      ${arrow && html`<div class="arrow-row">
+        <${BodyLevel} label="How much did I struggle against it?" value=${doc.arrow || 0}
+          onChange=${(n) => update((d) => { d.arrow = n; })} />
+        <p class="hint small">The second arrow: pain is the first; our resistance to it is the second.</p>
+      </div>`}
     <//>`;
 }
 
@@ -161,8 +174,8 @@ function NotesBox({ docKey, label = 'Journal' }) {
     </section>`;
 }
 
-function QuoteCard({ date, big }) {
-  const q = quoteFor(date);
+function QuoteCard({ date, big, path }) {
+  const q = quoteForPath(date, path);
   return html`<figure class="quote ${big ? 'big' : ''}">
     <blockquote>${q.t}</blockquote>
     <figcaption>${q.a} · <i>${q.s}</i></figcaption>
@@ -202,12 +215,14 @@ export function DayView({ date, go }) {
   const key = `day:${ymd(date)}`;
   const [doc, update] = useDoc(key, DAY);
   const events = useEvents(date, addDays(date, 1)).get(ymd(date)) || [];
-  const q = quoteFor(date);
+  const path = settings.path || 'stoic';
+  const stoic = hasStoic(path); const buddhist = hasBuddhist(path);
+  const q = quoteForPath(date, path);
   const isToday = sameDay(date, today());
   const hour = new Date().getHours();
   const phase = !isToday ? '' : hour < 12 ? 'morning' : hour < 18 ? 'day' : 'evening';
   const title = `${DAYS[date.getDay()]}, ${MONTHS[date.getMonth()]} ${date.getDate()}`;
-  const theme = MONTH_THEMES[date.getMonth()];
+  const theme = themeFor(date.getMonth(), path);
   const now = (p) => (phase === p ? html`<span class="now">now</span>` : '');
   const slots = intentionSlots(doc);
   const open = slots.filter(({ slot, text }) => text.trim() && !doc.idone?.[slot] && !doc.imoved?.[slot]);
@@ -226,7 +241,7 @@ export function DayView({ date, go }) {
           <button class="link" onClick=${() => go('month', date)}>${MONTHS[date.getMonth()]}</button>
         </div>
       </header>
-      <${QuoteCard} date=${date} big />
+      <${QuoteCard} date=${date} big path=${path} />
 
       <div class="day-grid">
         <div class="col">
@@ -245,7 +260,20 @@ export function DayView({ date, go }) {
               </div>`;
             })}
           <//>
-          <${Block} title="Premeditatio malorum" hint="What could go wrong, and how will I respond?">
+          ${buddhist && html`<${Block} title="Sitting" hint="A few minutes of stillness: breath, body, sounds">
+            <div class="sit">
+              <label class="habit ${doc.sit.done ? 'on' : ''}">
+                <input type="checkbox" checked=${!!doc.sit.done} onChange=${(e) => update((d) => { d.sit = { ...d.sit, done: e.target.checked }; })} />
+                <span>I sat today</span>
+              </label>
+              <label class="sit-min">
+                <input type="number" min="0" max="240" inputmode="numeric" value=${doc.sit.min || ''} placeholder="0"
+                  onInput=${(e) => update((d) => { d.sit = { ...d.sit, min: Math.max(0, +e.target.value || 0), done: d.sit.done || +e.target.value > 0 }; })} />
+                <span>minutes</span>
+              </label>
+            </div>
+          <//>`}
+          ${stoic && html`<${Block} title="Premeditatio malorum" hint="What could go wrong, and how will I respond?">
             ${[0, 1].map((i) => {
               const it = doc.premed[i] || {};
               const set = (patch) => update((d) => { d.premed = setAt(d.premed, i, { ...(d.premed[i] || {}), ...patch }, 2); });
@@ -254,8 +282,8 @@ export function DayView({ date, go }) {
                 <${Line} cls="response" value=${it.response} placeholder="Then I will…" onInput=${(v) => set({ response: v })} />
               </div>`;
             })}
-          <//>
-          <${Block} title="Dichotomy of control">
+          <//>`}
+          ${stoic && html`<${Block} title="Dichotomy of control">
             <div class="control">
               ${[['in', 'Up to me'], ['out', 'Not up to me']].map(([k, label]) => html`
                 <div class="control-col ${k}">
@@ -264,7 +292,11 @@ export function DayView({ date, go }) {
                     onInput=${(v) => update((d) => { d.control[k] = setAt(d.control[k], i, v, 3); })} />`)}
                 </div>`)}
             </div>
-          <//>
+          <//>`}
+          ${path === 'buddhist' && html`<${Block} title="Letting be" hint="What I'll hold lightly today">
+            ${[0, 1, 2].map((i) => html`<${Line} value=${doc.letbe[i]} label="Hold lightly"
+              onInput=${(v) => update((d) => { d.letbe = setAt(d.letbe, i, v, 3); })} />`)}
+          <//>`}
         </div>
 
         <div class="col">
@@ -283,7 +315,7 @@ export function DayView({ date, go }) {
               ${!(settings.habits || []).length && html`<p class="hint">Add habits in Settings.</p>`}
             </div>
           <//>
-          <${BodyBlock} doc=${doc} update=${update} items=${settings.body || DEFAULT_BODY} />
+          <${BodyBlock} doc=${doc} update=${update} items=${settings.body || DEFAULT_BODY} arrow=${buddhist} />
           <${Block} title="Mood & energy">
             <${Scale} label="Mood" low="heavy" high="serene" value=${doc.mood} onChange=${(n) => update((d) => { d.mood = n; })} />
             <${Scale} label="Energy" low="drained" high="vital" value=${doc.energy} onChange=${(n) => update((d) => { d.energy = n; })} />
@@ -296,12 +328,22 @@ export function DayView({ date, go }) {
 
         <div class="col">
           <h2 class="phase">Evening <small>Review</small>${now('evening')}</h2>
-          <${Block} title="The four virtues" hint="Tap: partly, yes">
+          ${stoic && html`<${Block} title="The four virtues" hint="Tap: partly, yes">
             <div class="virtues">
               ${VIRTUES.map((v) => html`<${VirtueToggle} v=${v} value=${doc.virtues[v.id]}
                 onCycle=${() => update((d) => { d.virtues[v.id] = ((d.virtues[v.id] || 0) + 1) % 3; })} />`)}
             </div>
-          <//>
+          <//>`}
+          ${buddhist && html`<${Block} title="The four immeasurables" hint="Tap: partly, yes">
+            <div class="virtues">
+              ${IMMEASURABLES.map((v) => html`<${VirtueToggle} v=${v} value=${doc.immeasurables[v.id]}
+                onCycle=${() => update((d) => { d.immeasurables[v.id] = ((d.immeasurables[v.id] || 0) + 1) % 3; })} />`)}
+            </div>
+          <//>`}
+          ${buddhist && html`<${Block} title="Letting go and kindness">
+            <${Area} value=${doc.cling} placeholder="What did I cling to today?" onInput=${(v) => update((d) => { d.cling = v; })} />
+            <${Line} value=${doc.metta} placeholder="One person I wish well today (can be me)" onInput=${(v) => update((d) => { d.metta = v; })} />
+          <//>`}
           ${showOpen && open.length > 0 && html`<${Block} title="Not done today" hint="What got in the way, and was it up to me?">
             ${open.map(({ slot, text }) => html`<div class="open-int">
               <div class="open-head"><span>${text}</span>
@@ -310,7 +352,7 @@ export function DayView({ date, go }) {
                 onInput=${(v) => update((d) => { d.iwhy = setAt(d.iwhy, slot, v, 4); })} />
             </div>`)}
           <//>`}
-          <${Block} title="Seneca's review">
+          <${Block} title=${stoic ? "Seneca's review" : 'Evening review'}>
             <${Area} value=${doc.review.well} placeholder="What did I do well?" onInput=${(v) => update((d) => { d.review.well = v; })} />
             <${Area} value=${doc.review.short} placeholder="Where did I fall short?" onInput=${(v) => update((d) => { d.review.short = v; })} />
             <${Area} value=${doc.review.better} placeholder="What will I do better tomorrow?" onInput=${(v) => update((d) => { d.review.better = v; })} />
@@ -326,7 +368,8 @@ export function DayView({ date, go }) {
 
 // ---------- Week ----------
 
-function DayCard({ day, go, habits, events }) {
+function DayCard({ day, go, habits, events, path }) {
+  const vs = virtueSet(path);
   const [doc, update] = useDoc(`day:${ymd(day)}`, DAY);
   const t = sameDay(day, today());
   return html`
@@ -338,7 +381,7 @@ function DayCard({ day, go, habits, events }) {
       <div class="daycard-meta">
         <span class="pip m${doc.mood || 0}" title=${`Mood ${doc.mood || '–'}`}></span>
         <span class="pip m${doc.energy || 0}" title=${`Energy ${doc.energy || '–'}`}></span>
-        <span class="vdots">${VIRTUES.map((v) => html`<i class=${`v${doc.virtues[v.id] || 0}`} title=${v.name}></i>`)}</span>
+        <span class="vdots">${vs.items.map((v) => html`<i class=${`v${doc[vs.field]?.[v.id] || 0}`} title=${v.name}></i>`)}</span>
       </div>
       <div class="daycard-habits">
         ${habits.map((h) => html`<button class="tick ${doc.habits[h.id] ? 'on' : ''}" title=${h.name} aria-label=${h.name}
@@ -356,7 +399,7 @@ export function WeekView({ date, go }) {
   const events = useEvents(start, addDays(start, 7));
   const { week, year } = weekLabel(start);
   const [doc, update] = useDoc(`week:${ymd(start)}`, { review: {} });
-  const ex = exerciseFor(week);
+  const ex = exerciseForPath(week, settings.path || 'stoic');
   return html`
     <div class="page week">
       <header class="page-head">
@@ -377,7 +420,7 @@ export function WeekView({ date, go }) {
         <//>
       </div>
       <div class="daycards">
-        ${days.map((d) => html`<${DayCard} day=${d} go=${go} habits=${settings.habits || []} events=${events.get(ymd(d)) || []} />`)}
+        ${days.map((d) => html`<${DayCard} day=${d} go=${go} habits=${settings.habits || []} events=${events.get(ymd(d)) || []} path=${settings.path || 'stoic'} />`)}
       </div>
       <h2 class="phase">Weekly review</h2>
       <div class="review-grid">
@@ -439,7 +482,8 @@ export function MonthView({ date, go }) {
   const weeks = monthWeeks(y, m);
   const events = useEvents(weeks[0][0], addDays(weeks[weeks.length - 1][6], 1));
   const t = today();
-  const theme = MONTH_THEMES[m];
+  const theme = themeFor(m, settings.path || 'stoic');
+  const vs = virtueSet(settings.path || 'stoic');
   return html`
     <div class="page month">
       <aside class="month-side">
@@ -470,20 +514,20 @@ export function MonthView({ date, go }) {
               if (d.getMonth() !== m) return html`<div class="mg-cell out"></div>`;
               const dd = dayDoc(d);
               const evs = events.get(ymd(d)) || [];
-              const virtues = VIRTUES.filter((v) => dd.virtues?.[v.id]).length;
+              const virtues = vs.items.filter((v) => dd[vs.field]?.[v.id]).length;
               return html`
                 <button class="mg-cell ${sameDay(d, t) ? 'today' : ''} ${dd.mood ? 'mood m' + dd.mood : ''}" onClick=${() => go('day', d)}
                   aria-label=${`${MONTHS[m]} ${d.getDate()}`}>
                   <span class="mg-num">${d.getDate()}</span>
                   ${dd.intention && html`<span class="mg-int">${dd.intention}</span>`}
                   <span class="mg-foot">
-                    ${virtues > 0 && html`<span class="vdots">${VIRTUES.map((v) => html`<i class=${`v${dd.virtues?.[v.id] || 0}`}></i>`)}</span>`}
+                    ${virtues > 0 && html`<span class="vdots">${vs.items.map((v) => html`<i class=${`v${dd[vs.field]?.[v.id] || 0}`}></i>`)}</span>`}
                     ${evs.length > 0 && html`<span class="mg-evcount" title=${evs.map((e) => e.title).join(', ')}>${evs.length} ${evs.length === 1 ? 'event' : 'events'}</span>`}
                   </span>
                 </button>`;
             })}`)}
         </div>
-        <${MoodLegend} />
+        <${MoodLegend} label=${vs.name[0].toUpperCase() + vs.name.slice(1)} />
         <h2 class="phase">Habits</h2>
         <${HabitGrid} y=${y} m=${m} habits=${settings.habits || []} go=${go} />
         <${MonthReview} y=${y} m=${m} settings=${settings} />
@@ -491,9 +535,9 @@ export function MonthView({ date, go }) {
     </div>`;
 }
 
-const MoodLegend = () => html`<div class="legend">
+const MoodLegend = ({ label = 'Virtues' }) => html`<div class="legend">
   <span>Mood</span>${[1, 2, 3, 4, 5].map((n) => html`<i class=${`m${n}`}>${n}</i>`)}
-  <span class="legend-v">Virtues</span><span class="vdots"><i class="v1"></i></span> partly <span class="vdots"><i class="v2"></i></span> yes
+  <span class="legend-v">${label}</span><span class="vdots"><i class="v1"></i></span> partly <span class="vdots"><i class="v2"></i></span> yes
 </div>`;
 
 // ---------- Year ----------
@@ -515,14 +559,14 @@ function MiniMonth({ y, m, go }) {
     </div>`;
 }
 
-function yearStats(y) {
+function yearStats(y, vs) {
   let journaled = 0; let moodSum = 0; let moodN = 0; let virtueDays = 0;
   for (const k of store.keys()) {
     if (!k.startsWith(`day:${y}-`)) continue;
     const d = store.get(k) || {};
     if (hasContent(d)) journaled++;
     if (d.mood) { moodSum += d.mood; moodN++; }
-    if (VIRTUES.every((v) => d.virtues?.[v.id])) virtueDays++;
+    if (vs.items.every((v) => d[vs.field]?.[v.id])) virtueDays++;
   }
   return { journaled, mood: moodN ? (moodSum / moodN).toFixed(1) : '–', virtueDays };
 }
@@ -534,7 +578,8 @@ export function YearView({ date, go }) {
   const [settings] = useSettings();
   const [q, setQ] = useState(() => (date.getFullYear() === today().getFullYear() ? quarterOf(today()) : 4));
   const [doc, update] = useDoc(`year:${y}`, { values: [], letgo: [] });
-  const stats = yearStats(y);
+  const vs = virtueSet(settings.path || 'stoic');
+  const stats = yearStats(y, vs);
   return html`
     <div class="page year">
       <header class="page-head">
@@ -560,12 +605,12 @@ export function YearView({ date, go }) {
             <div class="stats">
               <div><b>${stats.journaled}</b><small>days journaled</small></div>
               <div><b>${stats.mood}</b><small>average mood</small></div>
-              <div><b>${stats.virtueDays}</b><small>days with all four virtues</small></div>
+              <div><b>${stats.virtueDays}</b><small>days with all four ${vs.name}</small></div>
             </div>
           </aside>
           <div>
             <div class="year-grid">${MONTHS.map((_, m) => html`<${MiniMonth} y=${y} m=${m} go=${go} />`)}</div>
-            <${MoodLegend} />
+            <${MoodLegend} label=${vs.name[0].toUpperCase() + vs.name.slice(1)} />
           </div>
         </div>`
       : tab === 'quarters' ? html`
@@ -608,10 +653,14 @@ function LifeInWeeks() {
       <div class="life-head">
         <p class="life-big"><b>${lived.toLocaleString('en-US')}</b> weeks lived · <b>${left.toLocaleString('en-US')}</b> to ${years}</p>
         <p class="hint">Age ${age}. Each square is a week. The highlighted one is this week. Change the horizon in Settings.</p>
-        <figure class="quote">
+        ${hasStoic(settings.path) && html`<figure class="quote">
           <blockquote>Consider thyself to be dead, and to have completed thy life up to the present time; and live the remainder according to nature.</blockquote>
           <figcaption>Marcus Aurelius · <i>Meditations</i></figcaption>
-        </figure>
+        </figure>`}
+        ${hasBuddhist(settings.path) && html`<figure class="quote">
+          <blockquote>${MEMENTO_BUDDHIST.t}</blockquote>
+          <figcaption>${MEMENTO_BUDDHIST.a} · <i>${MEMENTO_BUDDHIST.s}</i></figcaption>
+        </figure>`}
       </div>
       <div class="life-grid">${rows}</div>
     </div>`;

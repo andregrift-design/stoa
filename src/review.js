@@ -3,7 +3,7 @@
 
 import { html } from './ui.js';
 import { store } from './db.js';
-import { VIRTUES, BODY_LEVELS, MONTH_THEMES } from './stoic.js';
+import { VIRTUES, IMMEASURABLES, BODY_LEVELS, themeFor, hasStoic, hasBuddhist } from './stoic.js';
 import { MONTHS, ymd, ym, addDays } from './dates.js';
 
 export function hasContent(doc) {
@@ -31,6 +31,8 @@ export function periodStats(from, to, settings) {
     from, to, days: days.length, journaled: 0, calm: 0, allVirtues: 0,
     mood: [], energy: [], perDay: [],
     virtues: Object.fromEntries(VIRTUES.map((v) => [v.id, 0])),
+    imm: Object.fromEntries(IMMEASURABLES.map((v) => [v.id, 0])), allImm: 0,
+    sitDays: 0, sitMin: 0, arrow: [],
     habits: Object.fromEntries(habits.map((h) => [h.id, 0])),
     body: Object.fromEntries(bodyItems.map((b) => [b.id, { sum: 0, n: 0, heavy: 0, perDay: [] }])),
     extras: {}, gratitude: {}, wins: [],
@@ -53,6 +55,11 @@ export function periodStats(from, to, settings) {
     const v = doc.virtues || {};
     for (const x of VIRTUES) if (v[x.id]) s.virtues[x.id]++;
     if (VIRTUES.every((x) => v[x.id])) s.allVirtues++;
+    const im = doc.immeasurables || {};
+    for (const x of IMMEASURABLES) if (im[x.id]) s.imm[x.id]++;
+    if (IMMEASURABLES.every((x) => im[x.id])) s.allImm++;
+    if (doc.sit?.done || doc.sit?.min > 0) { s.sitDays++; s.sitMin += doc.sit?.min || 0; }
+    if (doc.arrow) s.arrow.push(doc.arrow);
     for (const h of habits) if (doc.habits?.[h.id]) s.habits[h.id]++;
     // A day counts for body averages once anything about the body was entered that day.
     const body = doc.body || {};
@@ -80,6 +87,7 @@ export function periodStats(from, to, settings) {
     for (const w of m.wins || []) if (w && w.trim()) s.wins.push(w.trim());
   }
   s.intPct = s.intTotal ? Math.round((s.intDone / s.intTotal) * 100) : null;
+  s.arrowAvg = r1(avg(s.arrow));
   s.moodAvg = r1(avg(s.mood));
   s.energyAvg = r1(avg(s.energy));
   for (const b of bodyItems) s.body[b.id].avg = s.body[b.id].n ? r1(s.body[b.id].sum / s.body[b.id].n) : null;
@@ -99,6 +107,13 @@ export function patterns(s, settings) {
     if (yes.length >= 4 && no.length >= 4) {
       const a = avg(yes); const b = avg(no);
       if (Math.abs(a - b) >= 0.4) out.push({ w: Math.abs(a - b), text: `On days you ticked “${h.name}”, mood averaged ${fmt(a)}; on other days, ${fmt(b)}.` });
+    }
+  }
+  if (hasBuddhist(settings.path)) {
+    const { yes, no } = moodWith((doc) => doc.sit?.done || doc.sit?.min > 0);
+    if (yes.length >= 4 && no.length >= 4) {
+      const a = avg(yes); const b = avg(no);
+      if (Math.abs(a - b) >= 0.4) out.push({ w: Math.abs(a - b), text: `On days you sat, mood averaged ${fmt(a)}; on other days, ${fmt(b)}.` });
     }
   }
   for (const b of settings.body || []) {
@@ -145,9 +160,18 @@ function compareRows(cur, prev, settings) {
     { label: 'Moved to tomorrow', c: cur.intMoved, p: prev.intMoved },
     { label: 'Not done', c: cur.intOpen, p: prev.intOpen },
     { label: 'Share done (%)', c: cur.intPct, p: prev.intPct },
-    { group: 'Virtues', label: 'All four virtues', c: cur.allVirtues, p: prev.allVirtues },
-    ...VIRTUES.map((v) => ({ label: v.name, c: cur.virtues[v.id], p: prev.virtues[v.id] })),
   ];
+  if (hasStoic(settings.path)) rows.push(
+    { group: 'Virtues (days)', label: 'All four virtues', c: cur.allVirtues, p: prev.allVirtues },
+    ...VIRTUES.map((v) => ({ label: v.name, c: cur.virtues[v.id], p: prev.virtues[v.id] })),
+  );
+  if (hasBuddhist(settings.path)) rows.push(
+    { group: 'Immeasurables (days)', label: 'All four immeasurables', c: cur.allImm, p: prev.allImm },
+    ...IMMEASURABLES.map((v) => ({ label: v.name, c: cur.imm[v.id], p: prev.imm[v.id] })),
+    { group: 'Practice', label: 'Days sat', c: cur.sitDays, p: prev.sitDays },
+    { label: 'Minutes sat', c: cur.sitMin, p: prev.sitMin },
+    { label: 'Struggle against discomfort (0–3)', c: cur.arrowAvg, p: prev.arrowAvg, dec: true },
+  );
   (settings.body || []).forEach((b, i) => rows.push({
     group: i === 0 ? 'How my body felt (average 0–3)' : '', label: b.name, c: cur.body[b.id]?.avg ?? null, p: prev.body[b.id]?.avg ?? null, dec: true,
   }));
@@ -221,13 +245,16 @@ function BodyStrip({ s, settings }) {
     </div>`;
 }
 
-function Tiles({ cur, prev }) {
+function Tiles({ cur, prev, settings }) {
   const tile = (label, c, p, dec) => html`<div class="tile"><small>${label}</small><b>${show(c, dec)}</b>${change(c, p)}</div>`;
   return html`<div class="tiles">
     ${tile('Average mood', cur.moodAvg, prev.moodAvg, true)}
     ${tile('Average energy', cur.energyAvg, prev.energyAvg, true)}
     ${tile('Intentions done (%)', cur.intPct, prev.intPct)}
-    ${tile('Days with all four virtues', cur.allVirtues, prev.allVirtues)}
+    ${settings.path === 'buddhist'
+      ? tile('Days with all four immeasurables', cur.allImm, prev.allImm)
+      : tile('Days with all four virtues', cur.allVirtues, prev.allVirtues)}
+    ${hasBuddhist(settings.path) ? tile('Days sat', cur.sitDays, prev.sitDays) : ''}
     ${tile('Calm days (mood 4–5)', cur.calm, prev.calm)}
   </div>`;
 }
@@ -260,8 +287,8 @@ export function MonthReview({ y, m, settings }) {
   return html`
     <section class="review">
       <h2 class="phase">Review of ${MONTHS[m]} <small>compared with ${prevName}</small></h2>
-      <p class="hint">${cur.journaled} of ${cur.days} days journaled · Theme: ${(store.get(`month:${ym(from)}`) || {}).theme || MONTH_THEMES[m].title}</p>
-      <${Tiles} cur=${cur} prev=${prev} />
+      <p class="hint">${cur.journaled} of ${cur.days} days journaled · Theme: ${(store.get(`month:${ym(from)}`) || {}).theme || themeFor(m, settings.path).title}</p>
+      <${Tiles} cur=${cur} prev=${prev} settings=${settings} />
       <h3 class="review-h">Mood and energy per day</h3>
       <${MoodChart} s=${cur} prev=${prev} />
       <h3 class="review-h">How my body felt</h3>
@@ -303,7 +330,7 @@ export function QuarterReview({ y, q, settings }) {
     return vals.length >= 2 ? `${label}: ${vals.map((v) => v.toFixed(1)).join(' → ')}.` : null;
   };
   const best = (settings.habits || []).map((h) => ({ h, n: cur.habits[h.id] })).sort((a, b) => b.n - a.n)[0];
-  const themes = months.map((x) => (store.get(`month:${y}-${String(x.m + 1).padStart(2, '0')}`) || {}).theme || MONTH_THEMES[x.m].title);
+  const themes = months.map((x) => (store.get(`month:${y}-${String(x.m + 1).padStart(2, '0')}`) || {}).theme || themeFor(x.m, settings.path).title);
   const lines = [
     trend('moodAvg', 'Mood per month'),
     trend('energyAvg', 'Energy per month'),
@@ -315,7 +342,7 @@ export function QuarterReview({ y, q, settings }) {
     <section class="review">
       <h2 class="phase">Q${q} ${y} <small>compared with Q${pq} ${py}</small></h2>
       <p class="hint">${cur.journaled} of ${cur.days} days journaled</p>
-      <${Tiles} cur=${cur} prev=${prev} />
+      <${Tiles} cur=${cur} prev=${prev} settings=${settings} />
       <ul class="patterns">${lines.map((l) => html`<li>${l}</li>`)}</ul>
       <h3 class="review-h">Month by month, and compared with Q${pq}</h3>
       ${!enough(prev) && html`<p class="hint">Q${pq} has only ${prev.journaled} days filled in, so the comparison is rough.</p>`}

@@ -234,6 +234,20 @@ function Settings({ onClose }) {
         </section>
 
         <section>
+          <h3>Practice</h3>
+          <div class="seg practice">
+            ${[['stoic', 'Stoic'], ['buddhist', 'Buddhist'], ['both', 'Both']].map(([v, label]) => html`
+              <button class=${(settings.path || 'stoic') === v ? 'on' : ''} onClick=${() => update((s) => { s.path = v; })}>${label}</button>`)}
+          </div>
+          <p class="hint">${{
+            stoic: 'Stoic quotes, themes and exercises; premeditatio, dichotomy of control and the four virtues.',
+            buddhist: 'Dhammapada quotes, Buddhist themes and exercises; sitting, letting be, the second arrow, the four immeasurables, and letting go and kindness.',
+            both: 'Everything Stoic, plus sitting, the second arrow, the four immeasurables, and letting go and kindness. Quotes and exercises alternate.',
+          }[settings.path || 'stoic']}</p>
+          <p class="hint small">Switching never deletes anything: entries made in another mode are kept and come back when you switch again.</p>
+        </section>
+
+        <section>
           <h3>Habits</h3>
           ${(settings.habits || []).map((h, i) => html`
             <div class="cal-row">
@@ -317,7 +331,9 @@ async function boot() {
       setStatus('offline');
     }
   }
-  render(html`<${App} />`, document.getElementById('app'));
+  const root = document.getElementById('app');
+  root.textContent = ''; // drop the "Loading…" placeholder
+  render(html`<${App} />`, root);
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('sw.js').catch(console.warn);
   }

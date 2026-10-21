@@ -117,3 +117,98 @@ export const DEFAULT_BODY = [
 
 // How much something bothers me today, 0-3.
 export const BODY_LEVELS = ['none', 'a little', 'clearly', 'a lot'];
+
+// ---------- Buddhist influences (used when Settings → Practice is Buddhist or Both) ----------
+// Dhammapada lines adapted from F. Max Müller's public-domain translation (1881).
+
+export const DHAMMAPADA = [
+  { t: 'All that we are is the result of what we have thought: it is founded on our thoughts, it is made up of our thoughts.', a: 'Dhammapada', s: 'verse 1', p: 'Which thought shaped my day the most?' },
+  { t: 'If a man speaks or acts with a pure thought, happiness follows him, like a shadow that never leaves him.', a: 'Dhammapada', s: 'verse 2', p: 'Where can I act from a kind thought today?' },
+  { t: '"He abused me, he beat me, he defeated me, he robbed me": in those who do not harbour such thoughts, hatred will cease.', a: 'Dhammapada', s: 'verse 3', p: 'Which old grievance am I still replaying?' },
+  { t: 'Hatred does not cease by hatred at any time: hatred ceases by love. This is an old rule.', a: 'Dhammapada', s: 'verse 5', p: 'Where can I answer coldness with warmth?' },
+  { t: 'The world does not know that we must all come to an end here; but those who know it, their quarrels cease at once.', a: 'Dhammapada', s: 'verse 6', p: 'Which quarrel matters less in the light of impermanence?' },
+  { t: 'Earnestness is the path of the deathless, thoughtlessness the path of death.', a: 'Dhammapada', s: 'verse 21', p: 'What do I want to do with full attention today?' },
+  { t: 'It is good to tame the mind, which is difficult to hold in and flighty, rushing wherever it likes; a tamed mind brings happiness.', a: 'Dhammapada', s: 'verse 35', p: 'Where did my mind run off today, and how did I bring it back?' },
+  { t: 'Not the faults of others, not what they have done or left undone, but his own deeds and omissions should a wise man notice.', a: 'Dhammapada', s: 'verse 50', p: 'What is mine to look at today, rather than theirs?' },
+  { t: '"These sons belong to me, and this wealth belongs to me": with such thoughts a fool is tormented. He himself does not belong to himself; how much less sons and wealth?', a: 'Dhammapada', s: 'verse 62', p: 'What am I holding as if it were mine forever?' },
+  { t: 'Well-makers lead the water wherever they like; fletchers bend the arrow; carpenters bend a log of wood; wise people fashion themselves.', a: 'Dhammapada', s: 'verse 80', p: 'What am I shaping in myself this season?' },
+  { t: 'As a solid rock is not shaken by the wind, wise people falter not amidst blame and praise.', a: 'Dhammapada', s: 'verse 81', p: 'Whose praise or blame am I leaning on too much?' },
+  { t: 'Wise people, after they have listened to the teaching, become serene, like a deep, smooth, and still lake.', a: 'Dhammapada', s: 'verse 82', p: 'What helps my mind become still?' },
+  { t: 'Better than a thousand hollow words is one word that brings peace.', a: 'Dhammapada', s: 'verse 100', p: 'Which words today can bring someone peace?' },
+  { t: 'If one man conquer in battle a thousand times a thousand men, and another conquer himself, he is the greatest of conquerors.', a: 'Dhammapada', s: 'verse 103', p: 'Which small victory over myself can I win today?' },
+  { t: 'Let no man think lightly of good, saying in his heart, "It will not benefit me." Even by the falling of water-drops a water-pot is filled.', a: 'Dhammapada', s: 'verse 122', p: 'Which small good thing is worth doing today?' },
+  { t: 'Self is the lord of self; who else could be the lord? With self well subdued, a man finds a lord such as few can find.', a: 'Dhammapada', s: 'verse 160', p: 'Where can I be my own steady guide today?' },
+  { t: 'Look upon the world as a bubble, look upon it as a mirage.', a: 'Dhammapada', s: 'verse 170', p: 'What am I taking more seriously than it deserves?' },
+  { t: 'Not to commit any wrong, to do good, and to purify one\'s mind: that is the teaching of the awakened.', a: 'Dhammapada', s: 'verse 183', p: 'What would a clear, kind mind do next?' },
+  { t: 'Let us live happily then, not hating those who hate us; among those who hate us, let us dwell free from hatred.', a: 'Dhammapada', s: 'verse 197', p: 'Can I let someone be difficult without carrying it?' },
+  { t: 'Health is the greatest of gifts, contentedness the best riches; trust is the best of relationships, peace the highest happiness.', a: 'Dhammapada', s: 'verse 204', p: 'What gift do I already have today?' },
+  { t: 'Let a man overcome anger by love, evil by good, the greedy by generosity, the liar by truth.', a: 'Dhammapada', s: 'verse 223', p: 'Where can I answer a hard thing with its opposite?' },
+  { t: 'They blame him who sits silent, they blame him who speaks much, they also blame him who says little; there is no one on earth who is not blamed.', a: 'Dhammapada', s: 'verse 227', p: 'Can I let criticism pass through without clinging to it?' },
+  { t: 'The fault of others is easily seen, but that of oneself is difficult to see.', a: 'Dhammapada', s: 'verse 252', p: 'What do I find hard to see in myself?' },
+  { t: '"All created things perish": he who knows and sees this becomes at peace in pain.', a: 'Dhammapada', s: 'verse 277', p: 'What is passing, even now, that I can let pass?' },
+  { t: 'If by leaving a small pleasure one sees a great pleasure, let a wise man leave the small pleasure and look to the great.', a: 'Dhammapada', s: 'verse 290', p: 'Which small pleasure stands in the way of a deeper one?' },
+];
+
+export const BUDDHIST_THEMES = [
+  { title: 'Impermanence', text: 'Notice how everything changes: moods, bodies, seasons, worries. Let that loosen your grip.' },
+  { title: 'Mindfulness', text: 'Come back to the present moment, again and again, without scolding yourself for leaving.' },
+  { title: 'Loving-kindness', text: 'Wish yourself and others well, starting with the easy people and slowly including the hard ones.' },
+  { title: 'Compassion', text: 'Meet suffering, your own and others\', with warmth instead of turning away.' },
+  { title: 'Sympathetic joy', text: 'Let other people\'s happiness gladden you instead of measuring yourself against it.' },
+  { title: 'Equanimity', text: 'Stay balanced through pleasant and unpleasant, praise and blame, gain and loss.' },
+  { title: 'Right speech', text: 'Speak truthfully, kindly, helpfully, and at the right time. Or not at all.' },
+  { title: 'Right action', text: 'Let your actions cause as little harm as possible, to others and to yourself.' },
+  { title: 'Letting go', text: 'Notice what you cling to: outcomes, opinions, comfort. Practice opening your hand.' },
+  { title: 'Simplicity', text: 'Want less, notice more. Contentment is the best riches.' },
+  { title: 'Interconnection', text: 'See how your day depends on countless others. Nothing exists on its own.' },
+  { title: 'Death awareness', text: 'Maranasati: remember that life is short and uncertain, so what matters is now.' },
+];
+
+export const BUDDHIST_EXERCISES = [
+  { title: 'Body scan', text: 'Once a day, move your attention slowly from your feet to your head. Notice sensations without trying to change them.' },
+  { title: 'Walking meditation', text: 'Walk slowly for ten minutes. Feel each step: lifting, moving, placing.' },
+  { title: 'Mindful eating', text: 'Eat one meal a day without a screen. Taste, smell and chew with full attention.' },
+  { title: 'Loving-kindness', text: 'Silently repeat: may I be well, may I be at ease. Then wish the same for someone you love, someone neutral, someone difficult.' },
+  { title: 'Impermanence', text: 'Each evening, name one thing that changed today: a mood, a sound, a pain, a plan.' },
+  { title: 'Noting', text: 'When you are lost in thought, gently label it: planning, worrying, remembering. Then return to the breath.' },
+  { title: 'The second arrow', text: 'When something hurts, notice the pain itself, and then the struggle against it. Can you soften the second?' },
+  { title: 'Breath counting', text: 'Count ten breaths, then start again. When you lose count, simply begin at one.' },
+  { title: 'Generosity', text: 'Give something small each day this week: time, attention, a compliment, help.' },
+  { title: 'Mindful listening', text: 'In one conversation a day, only listen. No planning your answer.' },
+  { title: 'Sitting with discomfort', text: 'When something is unpleasant, stay with it for three breaths before reacting.' },
+  { title: 'Equanimity phrase', text: 'In hard moments, say quietly: this too is part of life; it will change.' },
+];
+
+export const IMMEASURABLES = [
+  { id: 'metta', name: 'Loving-kindness', q: 'Did I wish others and myself well?' },
+  { id: 'karuna', name: 'Compassion', q: 'Did I meet suffering with warmth?' },
+  { id: 'mudita', name: 'Sympathetic joy', q: 'Was I glad for someone else\'s good?' },
+  { id: 'upekkha', name: 'Equanimity', q: 'Did I stay balanced through ups and downs?' },
+];
+
+export const MEMENTO_BUDDHIST = { t: 'The world does not know that we must all come to an end here; but those who know it, their quarrels cease at once.', a: 'Dhammapada', s: 'verse 6' };
+
+// Practice mode: 'stoic' (default), 'buddhist' or 'both'.
+export const hasStoic = (path) => path !== 'buddhist';
+export const hasBuddhist = (path) => path === 'buddhist' || path === 'both';
+
+export function quoteForPath(date, path) {
+  if (path === 'buddhist') return dhammapadaFor(date);
+  if (path === 'both') return date.getDate() % 2 ? quoteFor(date) : dhammapadaFor(date);
+  return quoteFor(date);
+}
+
+function dhammapadaFor(date) {
+  const start = new Date(date.getFullYear(), 0, 0);
+  const doy = Math.round((new Date(date.getFullYear(), date.getMonth(), date.getDate()) - start) / 864e5);
+  return DHAMMAPADA[(doy + date.getFullYear()) % DHAMMAPADA.length];
+}
+
+export const themeFor = (m, path) => (path === 'buddhist' ? BUDDHIST_THEMES : MONTH_THEMES)[m];
+
+export function exerciseForPath(weekNo, path) {
+  const b = BUDDHIST_EXERCISES[(weekNo - 1 + BUDDHIST_EXERCISES.length) % BUDDHIST_EXERCISES.length];
+  if (path === 'buddhist') return b;
+  if (path === 'both' && weekNo % 2 === 0) return b;
+  return exerciseFor(weekNo);
+}

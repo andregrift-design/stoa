@@ -208,6 +208,14 @@ h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: v
 .open-int { margin: 6px 0 10px; }
 .open-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-weight: 500; }
 
+.sit { display: flex; gap: 10px; align-items: stretch; margin-top: 6px; }
+.sit .habit { flex: 1; }
+.sit-min { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line-soft); border-radius: 10px; padding: 0 10px; font-size: 14px; color: var(--muted); }
+.sit-min input { width: 52px; border: 0; background: transparent; font-size: 16px; color: var(--ink); text-align: right; outline: none; }
+.arrow-row { margin-top: 10px; }
+.arrow-row .body-name { font-style: italic; }
+.practice { margin-top: 4px; }
+
 /* ---------- notes & ink ---------- */
 
 .notes { display: flex; flex-direction: column; min-height: 260px; margin-top: 10px; }
