@@ -199,15 +199,32 @@ function setIntention(d, slot, v) {
 function moveToTomorrow(date, slot, text, update) {
   const key = `day:${ymd(addDays(date, 1))}`;
   const next = structuredClone(store.get(key) || {});
-  if (!(next.intention || '').trim()) next.intention = text;
-  else {
+  let target;
+  if (!(next.intention || '').trim()) { next.intention = text; target = 0; } else {
     const list = [...(next.intentions || [])];
     const free = Array.from({ length: Math.max(3, list.length) }, (_, i) => i).find((i) => !(list[i] || '').trim());
-    if (free === undefined) list.push(text); else list[free] = text;
+    if (free === undefined) { list.push(text); target = list.length; } else { list[free] = text; target = free + 1; }
     next.intentions = list;
   }
   store.set(key, next);
-  update((d) => { d.imoved = setAt(d.imoved, slot, true, 4); });
+  update((d) => { d.imoved = setAt(d.imoved, slot, true, 4); d.imovedTo = setAt(d.imovedTo, slot, target, 4); });
+}
+
+// Undo a move: unmark it today and remove the copy from tomorrow, unless it was ticked there.
+function undoMove(date, slot, text, update) {
+  const key = `day:${ymd(addDays(date, 1))}`;
+  const next = structuredClone(store.get(key) || {});
+  const slots = intentionSlots(next);
+  const saved = (store.get(`day:${ymd(date)}`) || {}).imovedTo?.[slot];
+  const hit = typeof saved === 'number' && slots[saved]?.text === text ? slots[saved]
+    : slots.find((x) => x.text === text);
+  if (hit && !next.idone?.[hit.slot]) {
+    setIntention(next, hit.slot, '');
+    if (next.imoved) next.imoved[hit.slot] = '';
+    if (next.iwhy) next.iwhy[hit.slot] = '';
+    store.set(key, next);
+  }
+  update((d) => { d.imoved = setAt(d.imoved, slot, false, 4); d.imovedTo = setAt(d.imovedTo, slot, '', 4); });
 }
 
 export function DayView({ date, go }) {
@@ -254,7 +271,8 @@ export function DayView({ date, go }) {
                   onChange=${(e) => update((d) => { d.idone = setAt(d.idone, slot, e.target.checked, 4); })} />
                 <${Line} value=${text} placeholder=${slot === 0 ? 'My main intention' : slot === 1 ? 'Also…' : ''} label="Intention"
                   onInput=${(v) => update((d) => setIntention(d, slot, v))} />
-                ${moved ? html`<span class="intent-tag">moved</span>`
+                ${moved ? html`<span class="intent-tag">moved</span>
+                  <button class="link small" title="Undo move" onClick=${() => undoMove(date, slot, text, update)}>Undo</button>`
                   : text.trim() && !done && html`<button class="intent-move" title="Move to tomorrow" aria-label="Move to tomorrow"
                       onClick=${() => moveToTomorrow(date, slot, text, update)}>→</button>`}
               </div>`;

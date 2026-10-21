@@ -1,5 +1,5 @@
 // Offline support: app files and CDN libraries are cached; Supabase calls always go to the network.
-const VERSION = 'stoa-v9';
+const VERSION = 'stoa-v10';
 const SHELL = [
   './', 'index.html', 'styles.css', 'manifest.webmanifest',
   'src/main.js', 'src/views.js', 'src/db.js', 'src/calendar.js', 'src/ink.js', 'src/ui.js', 'src/dates.js', 'src/stoic.js', 'src/review.js', 'src/config.js',
