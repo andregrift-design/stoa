@@ -197,6 +197,17 @@ h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: v
 .body-levels .b2.on { background: var(--m2); }
 .body-levels .b3.on { background: var(--m1); }
 
+.intent { display: flex; align-items: center; gap: 8px; }
+.intent input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent-strong); flex: none; margin: 0; }
+.intent .line { flex: 1; }
+.intent.done .line { color: var(--muted); text-decoration: line-through; }
+.intent.moved .line { color: var(--muted); font-style: italic; }
+.intent-move { border: 1px solid var(--line-soft); background: transparent; border-radius: 999px; width: 30px; height: 26px; color: var(--muted); flex: none; }
+.intent-move:hover { color: var(--accent-strong); border-color: var(--accent-strong); }
+.intent-tag { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; flex: none; }
+.open-int { margin: 6px 0 10px; }
+.open-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-weight: 500; }
+
 /* ---------- notes & ink ---------- */
 
 .notes { display: flex; flex-direction: column; min-height: 260px; margin-top: 10px; }
@@ -306,7 +317,7 @@ h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: v
 
 .review { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--line-soft); }
 .review-h { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 500; margin: 22px 0 8px; }
-.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
 .tile { background: var(--tint); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
 .tile small { font-size: 12px; color: var(--muted); }
 .tile b { font-family: var(--serif); font-size: 30px; line-height: 1.05; }

@@ -171,6 +171,32 @@ function QuoteCard({ date, big }) {
 
 // ---------- Day ----------
 
+// Slot 0 is the main intention, slots 1.. are the extra lines.
+export function intentionSlots(doc) {
+  const extra = doc.intentions || [];
+  return [{ slot: 0, text: doc.intention || '' },
+    ...Array.from({ length: Math.max(3, extra.length) }, (_, i) => ({ slot: i + 1, text: extra[i] || '' }))];
+}
+
+function setIntention(d, slot, v) {
+  if (slot === 0) d.intention = v;
+  else d.intentions = setAt(d.intentions, slot - 1, v, 3);
+}
+
+function moveToTomorrow(date, slot, text, update) {
+  const key = `day:${ymd(addDays(date, 1))}`;
+  const next = structuredClone(store.get(key) || {});
+  if (!(next.intention || '').trim()) next.intention = text;
+  else {
+    const list = [...(next.intentions || [])];
+    const free = Array.from({ length: Math.max(3, list.length) }, (_, i) => i).find((i) => !(list[i] || '').trim());
+    if (free === undefined) list.push(text); else list[free] = text;
+    next.intentions = list;
+  }
+  store.set(key, next);
+  update((d) => { d.imoved = setAt(d.imoved, slot, true, 4); });
+}
+
 export function DayView({ date, go }) {
   const [settings] = useSettings();
   const key = `day:${ymd(date)}`;
@@ -183,6 +209,10 @@ export function DayView({ date, go }) {
   const title = `${DAYS[date.getDay()]}, ${MONTHS[date.getMonth()]} ${date.getDate()}`;
   const theme = MONTH_THEMES[date.getMonth()];
   const now = (p) => (phase === p ? html`<span class="now">now</span>` : '');
+  const slots = intentionSlots(doc);
+  const open = slots.filter(({ slot, text }) => text.trim() && !doc.idone?.[slot] && !doc.imoved?.[slot]);
+  // Ask about open intentions on past days, and today from 5 pm.
+  const showOpen = date < today() || (isToday && hour >= 17);
 
   return html`
     <div class="page day">
@@ -201,10 +231,19 @@ export function DayView({ date, go }) {
       <div class="day-grid">
         <div class="col">
           <h2 class="phase">Morning <small>Prepare</small>${now('morning')}</h2>
-          <${Block} title="Today I will…">
-            <${Line} value=${doc.intention} placeholder="My main intention" onInput=${(v) => update((d) => { d.intention = v; })} />
-            ${[0, 1, 2].map((i) => html`<${Line} value=${doc.intentions[i]} placeholder=${i === 0 ? 'Also…' : ''} label="Intention"
-              onInput=${(v) => update((d) => { d.intentions = setAt(d.intentions, i, v, 3); })} />`)}
+          <${Block} title="Today I will…" hint="Tick when done. Not done? Move it to tomorrow.">
+            ${slots.map(({ slot, text }) => {
+              const done = !!doc.idone?.[slot]; const moved = !!doc.imoved?.[slot];
+              return html`<div class="intent ${done ? 'done' : ''} ${moved ? 'moved' : ''}">
+                <input type="checkbox" checked=${done} disabled=${moved} aria-label="Done"
+                  onChange=${(e) => update((d) => { d.idone = setAt(d.idone, slot, e.target.checked, 4); })} />
+                <${Line} value=${text} placeholder=${slot === 0 ? 'My main intention' : slot === 1 ? 'Also…' : ''} label="Intention"
+                  onInput=${(v) => update((d) => setIntention(d, slot, v))} />
+                ${moved ? html`<span class="intent-tag">moved</span>`
+                  : text.trim() && !done && html`<button class="intent-move" title="Move to tomorrow" aria-label="Move to tomorrow"
+                      onClick=${() => moveToTomorrow(date, slot, text, update)}>→</button>`}
+              </div>`;
+            })}
           <//>
           <${Block} title="Premeditatio malorum" hint="What could go wrong, and how will I respond?">
             ${[0, 1].map((i) => {
@@ -263,6 +302,14 @@ export function DayView({ date, go }) {
                 onCycle=${() => update((d) => { d.virtues[v.id] = ((d.virtues[v.id] || 0) + 1) % 3; })} />`)}
             </div>
           <//>
+          ${showOpen && open.length > 0 && html`<${Block} title="Not done today" hint="What got in the way, and was it up to me?">
+            ${open.map(({ slot, text }) => html`<div class="open-int">
+              <div class="open-head"><span>${text}</span>
+                <button class="link small" onClick=${() => moveToTomorrow(date, slot, text, update)}>Move to tomorrow →</button></div>
+              <${Area} value=${doc.iwhy?.[slot]} placeholder="What got in the way…" label=${`Why not: ${text}`}
+                onInput=${(v) => update((d) => { d.iwhy = setAt(d.iwhy, slot, v, 4); })} />
+            </div>`)}
+          <//>`}
           <${Block} title="Seneca's review">
             <${Area} value=${doc.review.well} placeholder="What did I do well?" onInput=${(v) => update((d) => { d.review.well = v; })} />
             <${Area} value=${doc.review.short} placeholder="Where did I fall short?" onInput=${(v) => update((d) => { d.review.short = v; })} />
@@ -287,7 +334,7 @@ function DayCard({ day, go, habits, events }) {
       <button class="daycard-head" onClick=${() => go('day', day)}>
         <span>${DAYS[day.getDay()].slice(0, 3)}</span><b>${day.getDate()}</b>
       </button>
-      <p class="daycard-int ${doc.intention ? '' : 'empty'}">${doc.intention || 'No intention yet'}</p>
+      <p class="daycard-int ${doc.intention ? '' : 'empty'}">${doc.idone?.[0] ? '✓ ' : ''}${doc.intention || 'No intention yet'}</p>
       <div class="daycard-meta">
         <span class="pip m${doc.mood || 0}" title=${`Mood ${doc.mood || '–'}`}></span>
         <span class="pip m${doc.energy || 0}" title=${`Energy ${doc.energy || '–'}`}></span>

@@ -34,12 +34,21 @@ export function periodStats(from, to, settings) {
     habits: Object.fromEntries(habits.map((h) => [h.id, 0])),
     body: Object.fromEntries(bodyItems.map((b) => [b.id, { sum: 0, n: 0, heavy: 0, perDay: [] }])),
     extras: {}, gratitude: {}, wins: [],
+    intTotal: 0, intDone: 0, intMoved: 0, intOpen: 0,
   };
   for (const d of days) {
     const doc = store.get(`day:${ymd(d)}`) || {};
     const journaled = hasContent(doc);
     if (journaled) s.journaled++;
     if (doc.mood) { s.mood.push(doc.mood); if (doc.mood >= 4) s.calm++; }
+    // Intentions: slot 0 is the main one, then the extra lines.
+    [doc.intention, ...(doc.intentions || [])].forEach((t, slot) => {
+      if (!(t || '').trim()) return;
+      s.intTotal++;
+      if (doc.idone?.[slot]) s.intDone++;
+      else if (doc.imoved?.[slot]) s.intMoved++;
+      else s.intOpen++;
+    });
     if (doc.energy) s.energy.push(doc.energy);
     const v = doc.virtues || {};
     for (const x of VIRTUES) if (v[x.id]) s.virtues[x.id]++;
@@ -70,6 +79,7 @@ export function periodStats(from, to, settings) {
     const m = store.get(`month:${ym(d)}`) || {};
     for (const w of m.wins || []) if (w && w.trim()) s.wins.push(w.trim());
   }
+  s.intPct = s.intTotal ? Math.round((s.intDone / s.intTotal) * 100) : null;
   s.moodAvg = r1(avg(s.mood));
   s.energyAvg = r1(avg(s.energy));
   for (const b of bodyItems) s.body[b.id].avg = s.body[b.id].n ? r1(s.body[b.id].sum / s.body[b.id].n) : null;
@@ -131,6 +141,10 @@ function compareRows(cur, prev, settings) {
     { label: 'Average mood (1–5)', c: cur.moodAvg, p: prev.moodAvg, dec: true },
     { label: 'Average energy (1–5)', c: cur.energyAvg, p: prev.energyAvg, dec: true },
     { label: 'Calm days (mood 4–5)', c: cur.calm, p: prev.calm },
+    { group: 'Intentions', label: 'Done', c: cur.intDone, p: prev.intDone },
+    { label: 'Moved to tomorrow', c: cur.intMoved, p: prev.intMoved },
+    { label: 'Not done', c: cur.intOpen, p: prev.intOpen },
+    { label: 'Share done (%)', c: cur.intPct, p: prev.intPct },
     { group: 'Virtues', label: 'All four virtues', c: cur.allVirtues, p: prev.allVirtues },
     ...VIRTUES.map((v) => ({ label: v.name, c: cur.virtues[v.id], p: prev.virtues[v.id] })),
   ];
@@ -212,6 +226,7 @@ function Tiles({ cur, prev }) {
   return html`<div class="tiles">
     ${tile('Average mood', cur.moodAvg, prev.moodAvg, true)}
     ${tile('Average energy', cur.energyAvg, prev.energyAvg, true)}
+    ${tile('Intentions done (%)', cur.intPct, prev.intPct)}
     ${tile('Days with all four virtues', cur.allVirtues, prev.allVirtues)}
     ${tile('Calm days (mood 4–5)', cur.calm, prev.calm)}
   </div>`;
