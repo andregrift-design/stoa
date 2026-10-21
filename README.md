@@ -23,40 +23,28 @@ python3 -m http.server 8765 --directory ~/Documents/Planner
 
 Open http://localhost:8765. Without Supabase configured, data stays in that browser only.
 
-## 2. Set up sync (Supabase, free, ~10 minutes)
+## 2. Sync (Supabase)
 
-1. Create an account and a **New project** at https://supabase.com (region: Frankfurt is closest).
-2. **SQL Editor** → New query → paste `supabase/schema.sql` → **Run**.
-3. **Authentication → Emails → Magic Link** template: add this line so you can sign in with a code (needed for the home-screen app on iPhone/iPad):
-   ```
-   <p>Your code: <b>{{ .Token }}</b></p>
-   ```
-4. **Authentication → URL Configuration**: set **Site URL** to your GitHub Pages address (step 3 below, e.g. `https://YOURNAME.github.io/planner/`) and add `http://localhost:8765/` under Redirect URLs.
-5. **Edge Functions → Deploy a new function → Via Editor**: name it `ics-proxy`, paste `supabase/functions/ics-proxy/index.ts`, deploy. Leave "Verify JWT" on.
-6. **Project Settings → API**: copy the Project URL and the `anon` (publishable) key into `src/config.js`. This key is meant to be public; row-level security keeps your data private.
-7. After you've signed in on all your devices: **Authentication → Sign In / Providers** → turn off **Allow new users to sign up**, so nobody else can create an account.
+Already set up in the Supabase project `stoa` (Frankfurt):
 
-## 3. Host it (GitHub Pages, free)
+- `supabase/schema.sql` created the `docs` table with row-level security.
+- `supabase/functions/ics-proxy/index.ts` is deployed as the `ics-proxy` edge function.
+- `src/config.js` holds the project URL and publishable key (public by design).
+- Authentication → URL Configuration: Site URL is the GitHub Pages address.
 
-1. Create a repository named `planner` on github.com (public; your planner data is not in it, only the app code).
-2. Push this folder:
-   ```bash
-   cd ~/Documents/Planner
-   git add -A && git commit -m "Planner app"
-   git branch -M main
-   git remote add origin https://github.com/YOURNAME/planner.git
-   git push -u origin main
-   ```
-3. Repository **Settings → Pages** → Source: *Deploy from a branch* → `main` / `(root)`.
-4. After a minute it's live at `https://YOURNAME.github.io/planner/`.
+Sign-in is email + password. After your devices are signed in, you can turn off
+**Authentication → Sign In / Providers → Allow new users to sign up** so nobody else can create an account.
 
-To ship a change later: commit, push, and bump `VERSION` in `sw.js` so devices pick it up.
+## 3. Hosting (GitHub Pages)
+
+Live at **https://andregrift-design.github.io/stoa/** from the `main` branch of
+`andregrift-design/stoa`. To ship a change: commit, bump `VERSION` in `sw.js`, and push.
 
 ## 4. Install on your devices
 
 - **iPhone / iPad**: open the address in Safari → Share → **Add to Home Screen**.
 - **Mac**: Safari → File → **Add to Dock**.
-- Open the app → ⚙︎ → enter your email → **Send code** → type the 6-digit code.
+- Open the app → ⚙︎ → sign in with your email and password.
 
 ## 5. Show your Apple Calendar
 
