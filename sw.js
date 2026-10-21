@@ -1,5 +1,5 @@
 // Offline support: app files and CDN libraries are cached; Supabase calls always go to the network.
-const VERSION = 'stoa-v10';
+const VERSION = 'stoa-v11';
 const SHELL = [
   './', 'index.html', 'styles.css', 'manifest.webmanifest',
   'src/main.js', 'src/views.js', 'src/db.js', 'src/calendar.js', 'src/ink.js', 'src/ui.js', 'src/dates.js', 'src/stoic.js', 'src/review.js', 'src/config.js',
@@ -22,8 +22,9 @@ self.addEventListener('fetch', (e) => {
   const sameOrigin = url.origin === location.origin;
   // App files: network first so updates show up, cache as fallback when offline.
   // CDN files (pinned versions): cache first.
+  // App files skip the browser's HTTP cache (GitHub Pages sets max-age=600), so a new version shows up at once.
   e.respondWith(sameOrigin
-    ? fetch(e.request).then((res) => {
+    ? fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin' }).then((res) => {
         const copy = res.clone();
         caches.open(VERSION).then((c) => c.put(e.request, copy));
         return res;

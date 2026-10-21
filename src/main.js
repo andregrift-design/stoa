@@ -335,7 +335,18 @@ async function boot() {
   root.textContent = ''; // drop the "Loading…" placeholder
   render(html`<${App} />`, root);
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    navigator.serviceWorker.register('sw.js').catch(console.warn);
+    // When a new version of the app takes over, reload once so its files are used.
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (hadController && !reloaded) { reloaded = true; location.reload(); }
+    });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then((reg) => {
+        // Check for a new version whenever the app comes back to the foreground.
+        document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && reg.update());
+      })
+      .catch(console.warn);
   }
 }
 
