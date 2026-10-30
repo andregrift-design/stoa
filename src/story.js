@@ -18,7 +18,7 @@ function list(items) {
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 }
 
-const STOP = new Set(`the and for with that this have has had was were are been being from into onto about over under after before than then them they their there here what when where which while who whom whose why how not but just very more most less much many some any all each every other another such fact only also even still again once both few own same into out off too can could would should will shall might must may did does doing done get got make made take took give gave let lets going went come came know think thing things really today tomorrow yesterday time times day days week weeks month year good great nice well able being myself yourself himself herself itself ourselves your yours mine ours his hers its our lot lots little bit way ways back like feel felt want need needs needed try trying keep kept start started stop work working there's it's i'm i've don't didn't can't won't doesn't isn't wasn't aren't een het van voor met niet maar ook dan dat die wel nog naar bij als maar zijn haar hun mijn wat waar hoe heb hebben gedaan`.split(/\s+/));
+const STOP = new Set(`the and for with that this have has had was were are been being from into onto about over under after before than then them they their there here what when where which while who whom whose why how not but just very more most less much many some any all each every other another such fact ability only also even still again once both few own same into out off too can could would should will shall might must may did does doing done get got make made take took give gave let lets going went come came know think thing things really today tomorrow yesterday time times day days week weeks month year good great nice well able being myself yourself himself herself itself ourselves your yours mine ours his hers its our lot lots little bit way ways back like feel felt want need needs needed try trying keep kept start started stop work working there's it's i'm i've don't didn't can't won't doesn't isn't wasn't aren't een het van voor met niet maar ook dan dat die wel nog naar bij als maar zijn haar hun mijn wat waar hoe heb hebben gedaan`.split(/\s+/));
 
 // Words that came back on at least `min` different days in the given fields.
 function recurring(perDay, pick, min = 2, max = 4) {
@@ -125,7 +125,7 @@ export function buildStory({ from, to, prevFrom, label, prevLabel, kind, setting
   ]);
 
   // Where you struggled
-  const themes = recurring(days, struggleFields, 2, 4);
+  const themes = recurring(days, struggleFields, 2, 5);
   add('Where you struggled', [
     themes.length > 0 && `These came up most in what you clung to, fell short on, or worried about: ${list(themes.map((t) => `${cap(t.word)} (${plural(t.days.length, 'day')})`))}.`,
     ...themes.map((t) => {
@@ -166,7 +166,7 @@ export function buildStory({ from, to, prevFrom, label, prevLabel, kind, setting
     add('Held against your year page', [
       (year.values || []).some(T) && `Your values: ${list((year.values || []).map(T).filter(Boolean).map((v) => `“${v.replace(/[.\s]+$/, '')}”`))}.`,
       (year.letgo || []).some(T) && `You wanted to let go of: “${(year.letgo || []).map(T).filter(Boolean).join(' ')}”`,
-      `You named something you clung to on ${plural(clingDays, 'day')}, and something you fell short on on ${plural(days.filter((p) => T(p.doc.review?.short)).length, 'day')}.`,
+      `On ${plural(clingDays, 'day')} you named something you clung to; on ${plural(days.filter((p) => T(p.doc.review?.short)).length, 'day')}, something you fell short on.`,
     ]);
   }
 

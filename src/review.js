@@ -5,6 +5,7 @@ import { html } from './ui.js';
 import { store } from './db.js';
 import { VIRTUES, IMMEASURABLES, BODY_LEVELS, themeFor, hasStoic, hasBuddhist } from './stoic.js';
 import { MONTHS, ymd, ym, addDays } from './dates.js';
+import { buildStory, StoryCard } from './story.js';
 
 export function hasContent(doc) {
   return Object.values(doc || {}).some((v) => (typeof v === 'string' ? v.trim()
@@ -64,7 +65,7 @@ export function periodStats(from, to, settings) {
     // A day counts for body averages once anything about the body was entered that day.
     const body = doc.body || {};
     const extras = (doc.bodyExtra || []).filter((x) => x.text?.trim());
-    const bodyDay = Object.values(body).some((x) => x > 0) || extras.length > 0;
+    const bodyDay = Object.values(body).some((x) => x > 0) || extras.length > 0 || !!doc.bodyOk;
     for (const b of bodyItems) {
       const lvl = body[b.id] || 0;
       s.body[b.id].perDay.push(bodyDay ? lvl : null);
@@ -288,6 +289,7 @@ export function MonthReview({ y, m, settings }) {
     <section class="review">
       <h2 class="phase">Review of ${MONTHS[m]} <small>compared with ${prevName}</small></h2>
       <p class="hint">${cur.journaled} of ${cur.days} days journaled · Theme: ${(store.get(`month:${ym(from)}`) || {}).theme || themeFor(m, settings.path).title}</p>
+      <${StoryCard} story=${buildStory({ from, to, prevFrom: pFrom, label: `${MONTHS[m]} ${y}`, prevLabel: prevName, kind: 'month', settings })} />
       <${Tiles} cur=${cur} prev=${prev} settings=${settings} />
       <h3 class="review-h">Mood and energy per day</h3>
       <${MoodChart} s=${cur} prev=${prev} />
@@ -342,6 +344,7 @@ export function QuarterReview({ y, q, settings }) {
     <section class="review">
       <h2 class="phase">Q${q} ${y} <small>compared with Q${pq} ${py}</small></h2>
       <p class="hint">${cur.journaled} of ${cur.days} days journaled</p>
+      <${StoryCard} story=${buildStory({ from, to, prevFrom: pFrom, label: `Q${q} ${y}`, prevLabel: `Q${pq} ${py}`, kind: 'quarter', settings, months: months.map((x) => x.stats).filter((x) => x.moodAvg != null) })} />
       <${Tiles} cur=${cur} prev=${prev} settings=${settings} />
       <ul class="patterns">${lines.map((l) => html`<li>${l}</li>`)}</ul>
       <h3 class="review-h">Month by month, and compared with Q${pq}</h3>

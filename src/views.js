@@ -2,7 +2,8 @@ import { html, useEffect, useReducer, useState } from './ui.js';
 import { store } from './db.js';
 import { eventsByDay, onEvents } from './calendar.js';
 import { InkPad } from './ink.js';
-import { hasContent, MonthReview, QuarterReview, quarterOf } from './review.js';
+import { hasContent, MonthReview, QuarterReview, quarterOf, periodStats } from './review.js';
+import { buildStory, StoryCard } from './story.js';
 import {
   VIRTUES, IMMEASURABLES, DEFAULT_HABITS, DEFAULT_BODY, BODY_LEVELS, MEMENTO_BUDDHIST,
   quoteForPath, themeFor, exerciseForPath, hasStoic, hasBuddhist,
@@ -124,6 +125,10 @@ function BodyBlock({ doc, update, items, arrow }) {
                 onClick=${() => setExtra(i, { level: x.level === n ? 0 : n })}>${n}</button>`)}
           </div>
         </div>`)}
+      <label class="habit body-ok ${doc.bodyOk ? 'on' : ''}">
+        <input type="checkbox" checked=${!!doc.bodyOk} onChange=${(e) => update((d) => { d.bodyOk = e.target.checked; })} />
+        <span>All fine today</span>
+      </label>
       ${arrow && html`<div class="arrow-row">
         <${BodyLevel} label="How much did I struggle against it?" value=${doc.arrow || 0}
           onChange=${(n) => update((d) => { d.arrow = n; })} />
@@ -629,6 +634,7 @@ export function YearView({ date, go }) {
           <div>
             <div class="year-grid">${MONTHS.map((_, m) => html`<${MiniMonth} y=${y} m=${m} go=${go} />`)}</div>
             <${MoodLegend} label=${vs.name[0].toUpperCase() + vs.name.slice(1)} />
+            <${YearStory} y=${y} settings=${settings} />
           </div>
         </div>`
       : tab === 'quarters' ? html`
@@ -636,6 +642,14 @@ export function YearView({ date, go }) {
         <${QuarterReview} y=${y} q=${q} settings=${settings} />`
       : html`<${LifeInWeeks} />`}
     </div>`;
+}
+
+function YearStory({ y, settings }) {
+  const from = new Date(y, 0, 1); const to = new Date(y + 1, 0, 1);
+  const months = Array.from({ length: 12 }, (_, m) => periodStats(new Date(y, m, 1), new Date(y, m + 1, 1), settings)).filter((x) => x.moodAvg != null);
+  const story = buildStory({ from, to, prevFrom: new Date(y - 1, 0, 1), label: `${y} in your own words`, prevLabel: String(y - 1), kind: 'year', settings, months });
+  if (story.journaled < 5) return html`<p class="hint">The written year review appears once at least 5 days are filled in (${story.journaled} so far).</p>`;
+  return html`<div class="review"><${StoryCard} story=${story} /></div>`;
 }
 
 function LifeInWeeks() {

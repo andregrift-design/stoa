@@ -366,6 +366,15 @@ h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: v
 .own-words p { margin: 4px 0; }
 .q-seg { margin-bottom: 4px; }
 
+.story { background: var(--tint); border-radius: 14px; padding: 18px 22px; margin: 14px 0 6px; }
+.story-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 4px; }
+.story-head h3 { font-family: var(--serif); font-size: 26px; }
+.story section { margin-top: 14px; }
+.story h4 { margin-bottom: 4px; }
+.story p { margin: 4px 0; line-height: 1.55; }
+.story .own-words { margin: 6px 0; }
+.body-ok { margin-top: 8px; }
+
 /* ---------- year ---------- */
 
 .year-layout { display: grid; grid-template-columns: 290px 1fr; gap: 36px; }
