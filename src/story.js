@@ -18,14 +18,14 @@ function list(items) {
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 }
 
-const STOP = new Set(`the and for with that this have has had was were are been being from into onto about over under after before than then them they their there here what when where which while who whom whose why how not but just very more most less much many some any all each every other another such only also even still again once both few own same into out off too can could would should will shall might must may did does doing done get got make made take took give gave let lets going went come came know think thing things really today tomorrow yesterday time times day days week weeks month year good great nice well able being myself yourself himself herself itself ourselves your yours mine ours his hers its our lot lots little bit way ways back like feel felt want need needs needed try trying keep kept start started stop work working there's it's i'm i've don't didn't can't won't doesn't isn't wasn't aren't een het van voor met niet maar ook dan dat die wel nog naar bij als maar zijn haar hun mijn wat waar hoe heb hebben gedaan`.split(/\s+/));
+const STOP = new Set(`the and for with that this have has had was were are been being from into onto about over under after before than then them they their there here what when where which while who whom whose why how not but just very more most less much many some any all each every other another such fact only also even still again once both few own same into out off too can could would should will shall might must may did does doing done get got make made take took give gave let lets going went come came know think thing things really today tomorrow yesterday time times day days week weeks month year good great nice well able being myself yourself himself herself itself ourselves your yours mine ours his hers its our lot lots little bit way ways back like feel felt want need needs needed try trying keep kept start started stop work working there's it's i'm i've don't didn't can't won't doesn't isn't wasn't aren't een het van voor met niet maar ook dan dat die wel nog naar bij als maar zijn haar hun mijn wat waar hoe heb hebben gedaan`.split(/\s+/));
 
 // Words that came back on at least `min` different days in the given fields.
 function recurring(perDay, pick, min = 2, max = 4) {
   const days = new Map();
   for (const p of perDay) {
     const text = pick(p.doc).join(' ').toLowerCase();
-    const words = new Set(text.split(/[^a-zà-ÿ'’]+/).map((w) => w.replace(/['’]s$/, '')).filter((w) => w.length >= 4 && !STOP.has(w)));
+    const words = new Set(text.split(/[^a-zà-ÿ'’]+/).map((w) => w.replace(/['’]s$/, '')).filter((w) => w.length >= 4 && !STOP.has(w) && !w.endsWith('ing')));
     for (const w of words) {
       if (!days.has(w)) days.set(w, []);
       days.get(w).push(p);
@@ -40,7 +40,7 @@ const struggleFields = (d) => [T(d.cling), T(d.review?.short), T(d.review?.bette
   ...(d.premed || []).map((x) => T(x?.risk)), ...(d.bodyExtra || []).map((x) => T(x?.text)), ...(d.letbe || []).map(T),
   ...(d.control?.in || []).map(T)];
 const gratitudeFields = (d) => (d.gratitude || []).map(T);
-const HEAVY = /\b(pain|hurt|hard|difficult|afraid|fear|scared|sad|grief|griev|worr|miss(ed|ing)?|lonely|death|dying|die|days left|time left|worst|loss|cry|guilt)/i;
+const HEAVY = /\b(pain|hurt|difficult|afraid|fear|scared|sad|grief|griev|worr|miss(ed|ing)?|lonely|death|dying|die|days left|time left|worst|loss|cry|guilt)/i;
 
 function intentionTrail(perDay) {
   const byText = new Map();
@@ -79,7 +79,7 @@ export function buildStory({ from, to, prevFrom, label, prevLabel, kind, setting
   }
   const topMetta = [...metta.entries()].filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1]).slice(0, 3);
   const gratWords = recurring(days, gratitudeFields, 2, 4);
-  const gratLines = days.flatMap((p) => gratitudeFields(p.doc).filter(Boolean));
+  const gratLines = days.flatMap((p) => gratitudeFields(p.doc).filter(Boolean).map((g) => [g, short(p.date)]));
   add('Who you were', [
     T(year.become) && `This year you wrote that you want to be: “${T(year.become)}”. Read this ${kind} with that in mind.`,
     gratWords.length && `In your gratitude, these came back most: ${list(gratWords.map((g) => `${cap(g.word)} (${plural(g.days.length, 'day')})`))}.`,
@@ -125,9 +125,9 @@ export function buildStory({ from, to, prevFrom, label, prevLabel, kind, setting
   ]);
 
   // Where you struggled
-  const themes = recurring(days, struggleFields, 2, 3);
+  const themes = recurring(days, struggleFields, 2, 4);
   add('Where you struggled', [
-    themes.length > 0 && `These words came back in what you clung to, fell short on, or worried about: ${list(themes.map((t) => `${cap(t.word)} (${plural(t.days.length, 'day')})`))}.`,
+    themes.length > 0 && `These came up most in what you clung to, fell short on, or worried about: ${list(themes.map((t) => `${cap(t.word)} (${plural(t.days.length, 'day')})`))}.`,
     ...themes.map((t) => {
       const last = t.days[t.days.length - 1];
       const line = struggleFields(last.doc).find((x) => x.toLowerCase().includes(t.word));
@@ -148,17 +148,17 @@ export function buildStory({ from, to, prevFrom, label, prevLabel, kind, setting
     }),
     habits.length > 0 && `Habits: ${list(habits.map(([n, c]) => `${n.toLowerCase()} on ${plural(c, 'day')}`))}.`,
     s.sitDays > 0 && `You sat on ${plural(s.sitDays, 'day')}, ${s.sitMin} minutes in total.`,
-    wells.length > 0 && { quotes: wells.slice(-3).map((x) => `${x.w} (${short(x.p.date)})`), lead: 'What you said you did well:' },
+    wells.length > 0 && { quotes: wells.slice(-3).map((x) => [x.w, short(x.p.date)]), lead: 'What you said you did well:' },
   ]);
 
   // What you carried
-  const heavy = days.flatMap((p) => [T(p.doc.reflection), T(p.doc.notes), ...(p.doc.control?.out || []).map(T)]
-    .filter((t) => t && HEAVY.test(t)).map((t) => `${t} (${short(p.date)})`)).slice(0, 4);
+  const heavy = days.flatMap((p) => [T(p.doc.reflection), T(p.doc.cling), ...(p.doc.control?.out || []).map(T)]
+    .filter((t) => t && HEAVY.test(t)).map((t) => [t, short(p.date)])).slice(0, 4);
   add('What you carried', [heavy.length > 0 && { quotes: heavy }]);
 
   // In your own words
   const refl = days.map((p) => ({ p, r: T(p.doc.reflection) })).filter((x) => x.r && !HEAVY.test(x.r)).sort((a, b) => a.r.length - b.r.length).slice(0, 2);
-  add('In your own words', [refl.length > 0 && { quotes: refl.map((x) => `${x.r} (${short(x.p.date)})`) }]);
+  add('In your own words', [refl.length > 0 && { quotes: refl.map((x) => [x.r, short(x.p.date)]) }]);
 
   // Held against your year page (yearly only)
   if (kind === 'year') {
@@ -175,7 +175,7 @@ export function buildStory({ from, to, prevFrom, label, prevLabel, kind, setting
   if (travelers.length) qs.push('The big intentions moved; the small ones got done. How can you make a big one fit into a single day?');
   if (themes[0]) qs.push(`${cap(themes[0].word)} came back ${themes[0].days.length} times. What is it asking of you?`);
   const weak = vset[0] && vset[0].items.map((x) => [x, vset[0].counts[x.id] || 0]).sort((a, b) => a[1] - b[1])[0];
-  if (weak) qs.push(`${weak[0].name} came up least. ${weak[0].q.replace(/^Did I/, 'Where could you').replace(/\?$/, '')} next ${kind === 'month' ? 'month' : kind === 'quarter' ? 'quarter' : 'year'}?`);
+  if (weak) qs.push(`${weak[0].name} came up least. When could you practice it next ${kind}?`);
   if (heavy.length) qs.push('Of what you carried, is there something you want to act on, rather than only carry?');
   add(`For next ${kind}`, [{ items: qs }]);
 
@@ -188,7 +188,7 @@ function toText(label, s, sections) {
     lines.push(sec.title.toUpperCase());
     for (const p of sec.paras) {
       if (typeof p === 'string') lines.push(p);
-      else if (p.quotes) { if (p.lead) lines.push(p.lead); p.quotes.forEach((q) => lines.push(`  “${q}”`)); } else if (p.items) p.items.forEach((q) => lines.push(`- ${q}`));
+      else if (p.quotes) { if (p.lead) lines.push(p.lead); p.quotes.forEach(([q, d]) => lines.push(`  “${q}”${d ? ` (${d})` : ''}`)); } else if (p.items) p.items.forEach((q) => lines.push(`- ${q}`));
     }
     lines.push('');
   }
@@ -211,7 +211,7 @@ export function StoryCard({ story }) {
         <section>
           <h4>${sec.title}</h4>
           ${sec.paras.map((p) => (typeof p === 'string' ? html`<p>${p}</p>`
-            : p.quotes ? html`${p.lead && html`<p>${p.lead}</p>`}<div class="own-words">${p.quotes.map((q) => html`<p>“${q}”</p>`)}</div>`
+            : p.quotes ? html`${p.lead && html`<p>${p.lead}</p>`}<div class="own-words">${p.quotes.map(([q, d]) => html`<p>“${q}”${d && html` <small class="muted">${d}</small>`}</p>`)}</div>`
             : html`<ul class="patterns reflect">${p.items.map((q) => html`<li>${q}</li>`)}</ul>`))}
         </section>`)}
     </article>`;
