@@ -36,7 +36,7 @@ function recurring(perDay, pick, min = 2, max = 4) {
     .map(([word, ds]) => ({ word, days: ds }));
 }
 
-const struggleFields = (d) => [T(d.cling), T(d.review?.short), T(d.review?.better), ...(d.iwhy || []).map(T),
+const struggleFields = (d) => [...(d.moments || []).filter((m) => m.kind === 'hard').map((m) => T(m.text)), T(d.cling), T(d.review?.short), T(d.review?.better), ...(d.iwhy || []).map(T),
   ...(d.premed || []).map((x) => T(x?.risk)), ...(d.bodyExtra || []).map((x) => T(x?.text)), ...(d.letbe || []).map(T),
   ...(d.control?.in || []).map(T)];
 const gratitudeFields = (d) => (d.gratitude || []).map(T);
@@ -98,6 +98,15 @@ export function buildStory({ from, to, prevFrom, label, prevLabel, kind, setting
     prev.moodAvg != null && s.moodAvg != null && `Compared with ${prevLabel}, mood went ${s.moodAvg > prev.moodAvg ? 'up' : s.moodAvg < prev.moodAvg ? 'down' : 'nowhere'} (${fmt(prev.moodAvg)} → ${fmt(s.moodAvg)}) and energy ${s.energyAvg > prev.energyAvg ? 'up' : s.energyAvg < prev.energyAvg ? 'down' : 'stayed the same'} (${fmt(prev.energyAvg)} → ${fmt(s.energyAvg)}).`,
     months && months.length > 1 && `Month by month, mood went ${months.map((m) => fmt(m.moodAvg)).join(' → ')}.`,
     lowWhy.length > 0 && lowWhy.length <= 3 && `Your lowest ${lowWhy.length === 1 ? 'day was' : 'days were'} ${list(lowWhy.map((x) => short(x.p.date)))}.${lowWhy.filter((x) => x.why).map((x) => ` On ${short(x.p.date)} you wrote: “${x.why}”`).join('')}`,
+  ]);
+
+  // Moments
+  const ms = days.flatMap((p) => (p.doc.moments || []).filter((m) => T(m.text)).map((m) => ({ ...m, date: p.date })));
+  const goods = ms.filter((m) => m.kind !== 'hard'); const hards = ms.filter((m) => m.kind === 'hard');
+  add('Moments', [
+    ms.length > 0 && `You noted ${plural(goods.length, 'good moment')} and ${plural(hards.length, 'hard one')}.${prev.good + prev.hard > 0 ? ` In ${prevLabel}: ${prev.good} good, ${prev.hard} hard.` : ''}`,
+    hards.length > 0 && { lead: 'What was hard:', quotes: hards.slice(-3).map((m) => [T(m.text), short(m.date)]) },
+    goods.length > 0 && { lead: 'What was good:', quotes: goods.slice(-3).map((m) => [T(m.text), short(m.date)]) },
   ]);
 
   // Your body

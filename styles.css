@@ -216,6 +216,28 @@ h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: v
 .arrow-row .body-name { font-style: italic; }
 .practice { margin-top: 4px; }
 
+.moments { margin: 6px 0 22px; max-width: 900px; }
+.moment { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line-soft); }
+.moment .line { flex: 1; border-bottom: 0; }
+.moment-kind { width: 26px; height: 26px; border-radius: 50%; border: 0; color: #fff; font-weight: 600; flex: none; padding: 0; background: var(--accent-strong); }
+.moment.hard .moment-kind { background: var(--terra); }
+.moment-t { font-size: 12px; color: var(--muted); flex: none; width: 38px; }
+.moment-del { border: 0; background: none; color: var(--muted); font-size: 20px; width: 28px; flex: none; }
+.moment-add { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.moment-add .line { flex: 1 1 240px; }
+.moment-save { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 5px 16px; font-weight: 500; }
+.answer { margin: 0 0 24px; max-width: 900px; }
+.answer-q { font-family: var(--serif); font-style: italic; font-size: 20px; margin: 0 0 4px; }
+.more { border-top: 1px solid var(--line-soft); padding-top: 12px; }
+.more > summary { cursor: pointer; font-family: var(--serif); font-size: 22px; font-weight: 600; list-style: none; margin-bottom: 14px; }
+.more > summary::-webkit-details-marker { display: none; }
+.more > summary::before { content: '▸ '; color: var(--muted); }
+.more[open] > summary::before { content: '▾ '; }
+.more > summary small { font-family: var(--font); font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 6px; }
+.daycard-moments { margin: 0; display: flex; gap: 6px; }
+.mm { font-size: 12px; font-weight: 600; padding: 1px 7px; border-radius: 999px; color: #fff; }
+.mm.good { background: var(--accent-strong); } .mm.hard { background: var(--terra); }
+
 /* ---------- notes & ink ---------- */
 
 .notes { display: flex; flex-direction: column; min-height: 260px; margin-top: 10px; }

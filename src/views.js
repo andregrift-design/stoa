@@ -49,7 +49,7 @@ export const virtueSet = (path) => (path === 'buddhist'
   : { field: 'virtues', items: VIRTUES, name: 'virtues' });
 
 const dayDoc = (d) => store.get(`day:${ymd(d)}`) || {};
-const DAY = { sit: {}, letbe: [], immeasurables: {}, body: {}, bodyExtra: [], intentions: [], premed: [], control: { in: [], out: [] }, habits: {}, gratitude: [], virtues: {}, review: {} };
+const DAY = { moments: [], sit: {}, letbe: [], immeasurables: {}, body: {}, bodyExtra: [], intentions: [], premed: [], control: { in: [], out: [] }, habits: {}, gratitude: [], virtues: {}, review: {} };
 
 // ---------- small building blocks ----------
 
@@ -250,6 +250,9 @@ export function DayView({ date, go }) {
   const open = slots.filter(({ slot, text }) => text.trim() && !doc.idone?.[slot] && !doc.imoved?.[slot]);
   // Ask about open intentions on past days, and today from 5 pm.
   const showOpen = date < today() || (isToday && hour >= 17);
+  const { moments: _m, reflection: _r, ...rest } = doc;
+  const [moreOpen, setMoreOpen] = useState(false);
+  useEffect(() => { setMoreOpen(hasContent(rest)); }, [key]);
 
   return html`
     <div class="page day">
@@ -265,6 +268,17 @@ export function DayView({ date, go }) {
       </header>
       <${QuoteCard} date=${date} big path=${path} />
 
+      <${Moments} doc=${doc} update=${update} isToday=${isToday} />
+
+      <section class="answer">
+        <h2 class="phase">Tonight <small>Your answer</small>${now('evening')}</h2>
+        <p class="answer-q">${q.p}</p>
+        <${Area} rows=${3} value=${doc.reflection} placeholder="Write your answer this evening…" label=${q.p}
+          onInput=${(v) => update((d) => { d.reflection = v; })} />
+      </section>
+
+      <details class="more" open=${moreOpen} onToggle=${(e) => setMoreOpen(e.currentTarget.open)}>
+        <summary>More <small>intentions, habits, body, mood, virtues, journal</small></summary>
       <div class="day-grid">
         <div class="col">
           <h2 class="phase">Morning <small>Prepare</small>${now('morning')}</h2>
@@ -380,13 +394,49 @@ export function DayView({ date, go }) {
             <${Area} value=${doc.review.short} placeholder="Where did I fall short?" onInput=${(v) => update((d) => { d.review.short = v; })} />
             <${Area} value=${doc.review.better} placeholder="What will I do better tomorrow?" onInput=${(v) => update((d) => { d.review.better = v; })} />
           <//>
-          <${Block} title="Reflection" hint=${q.p}>
-            <${Area} rows=${3} value=${doc.reflection} placeholder="On today's quote…" onInput=${(v) => update((d) => { d.reflection = v; })} />
-          <//>
         </div>
       </div>
       <${NotesBox} docKey=${key} />
+      </details>
     </div>`;
+}
+
+// ---------- Moments: things that happened, good or hard ----------
+
+const nowHM = () => { const n = new Date(); return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`; };
+
+function Moments({ doc, update, isToday }) {
+  const [kind, setKind] = useState('good');
+  const [text, setText] = useState('');
+  const list = doc.moments || [];
+  const add = () => {
+    if (!text.trim()) return;
+    update((d) => { d.moments = [...(d.moments || []), { id: Math.random().toString(36).slice(2, 9), t: isToday ? nowHM() : '', kind, text: text.trim() }]; });
+    setText('');
+  };
+  const edit = (id, patch) => update((d) => { d.moments = d.moments.map((m) => (m.id === id ? { ...m, ...patch } : m)); });
+  const remove = (id) => update((d) => { d.moments = d.moments.filter((m) => m.id !== id); });
+  return html`
+    <section class="moments">
+      <h2 class="phase">Moments <small>When something happens, good or hard</small></h2>
+      ${list.map((m) => html`
+        <div class="moment ${m.kind}">
+          <button class="moment-kind" title="Switch good / hard" aria-label=${m.kind === 'hard' ? 'Hard moment' : 'Good moment'}
+            onClick=${() => edit(m.id, { kind: m.kind === 'hard' ? 'good' : 'hard' })}>${m.kind === 'hard' ? '−' : '+'}</button>
+          ${m.t && html`<span class="moment-t">${m.t}</span>`}
+          <input class="line" value=${m.text} aria-label="Moment" onInput=${(e) => edit(m.id, { text: e.target.value })} />
+          <button class="moment-del" aria-label="Remove moment" title="Remove" onClick=${() => remove(m.id)}>×</button>
+        </div>`)}
+      <form class="moment-add" onSubmit=${(e) => { e.preventDefault(); add(); }}>
+        <div class="seg small">
+          <button type="button" class=${kind === 'good' ? 'on' : ''} onClick=${() => setKind('good')}>+ Good</button>
+          <button type="button" class=${kind === 'hard' ? 'on' : ''} onClick=${() => setKind('hard')}>− Hard</button>
+        </div>
+        <input class="line" value=${text} placeholder=${kind === 'hard' ? 'What happened that was hard?' : 'What happened that was good?'}
+          aria-label="New moment" onInput=${(e) => setText(e.target.value)} />
+        <button type="submit" class="moment-save">Add</button>
+      </form>
+    </section>`;
 }
 
 // ---------- Week ----------
@@ -400,6 +450,7 @@ function DayCard({ day, go, habits, events, path }) {
       <button class="daycard-head" onClick=${() => go('day', day)}>
         <span>${DAYS[day.getDay()].slice(0, 3)}</span><b>${day.getDate()}</b>
       </button>
+      ${(doc.moments || []).length > 0 && html`<p class="daycard-moments">${(doc.moments || []).filter((m) => m.kind !== 'hard').length > 0 && html`<span class="mm good">+${(doc.moments || []).filter((m) => m.kind !== 'hard').length}</span>`}${(doc.moments || []).filter((m) => m.kind === 'hard').length > 0 && html`<span class="mm hard">−${(doc.moments || []).filter((m) => m.kind === 'hard').length}</span>`}</p>`}
       <p class="daycard-int ${doc.intention ? '' : 'empty'}">${doc.idone?.[0] ? '✓ ' : ''}${doc.intention || 'No intention yet'}</p>
       <div class="daycard-meta">
         <span class="pip m${doc.mood || 0}" title=${`Mood ${doc.mood || '–'}`}></span>
@@ -542,7 +593,7 @@ export function MonthView({ date, go }) {
                 <button class="mg-cell ${sameDay(d, t) ? 'today' : ''} ${dd.mood ? 'mood m' + dd.mood : ''}" onClick=${() => go('day', d)}
                   aria-label=${`${MONTHS[m]} ${d.getDate()}`}>
                   <span class="mg-num">${d.getDate()}</span>
-                  ${dd.intention && html`<span class="mg-int">${dd.intention}</span>`}
+                  ${(dd.intention || dd.moments?.[0]?.text) && html`<span class="mg-int">${dd.intention || dd.moments[0].text}</span>`}
                   <span class="mg-foot">
                     ${virtues > 0 && html`<span class="vdots">${vs.items.map((v) => html`<i class=${`v${dd[vs.field]?.[v.id] || 0}`}></i>`)}</span>`}
                     ${evs.length > 0 && html`<span class="mg-evcount" title=${evs.map((e) => e.title).join(', ')}>${evs.length} ${evs.length === 1 ? 'event' : 'events'}</span>`}

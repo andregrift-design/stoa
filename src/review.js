@@ -37,13 +37,14 @@ export function periodStats(from, to, settings) {
     habits: Object.fromEntries(habits.map((h) => [h.id, 0])),
     body: Object.fromEntries(bodyItems.map((b) => [b.id, { sum: 0, n: 0, heavy: 0, perDay: [] }])),
     extras: {}, gratitude: {}, wins: [],
-    intTotal: 0, intDone: 0, intMoved: 0, intOpen: 0,
+    intTotal: 0, intDone: 0, intMoved: 0, intOpen: 0, good: 0, hard: 0,
   };
   for (const d of days) {
     const doc = store.get(`day:${ymd(d)}`) || {};
     const journaled = hasContent(doc);
     if (journaled) s.journaled++;
     if (doc.mood) { s.mood.push(doc.mood); if (doc.mood >= 4) s.calm++; }
+    for (const m of doc.moments || []) if ((m.text || '').trim()) { if (m.kind === 'hard') s.hard++; else s.good++; }
     // Intentions: slot 0 is the main one, then the extra lines.
     [doc.intention, ...(doc.intentions || [])].forEach((t, slot) => {
       if (!(t || '').trim()) return;
@@ -157,6 +158,8 @@ function compareRows(cur, prev, settings) {
     { label: 'Average mood (1–5)', c: cur.moodAvg, p: prev.moodAvg, dec: true },
     { label: 'Average energy (1–5)', c: cur.energyAvg, p: prev.energyAvg, dec: true },
     { label: 'Calm days (mood 4–5)', c: cur.calm, p: prev.calm },
+    { group: 'Moments', label: 'Good moments', c: cur.good, p: prev.good },
+    { label: 'Hard moments', c: cur.hard, p: prev.hard },
     { group: 'Intentions', label: 'Done', c: cur.intDone, p: prev.intDone },
     { label: 'Moved to tomorrow', c: cur.intMoved, p: prev.intMoved },
     { label: 'Not done', c: cur.intOpen, p: prev.intOpen },
